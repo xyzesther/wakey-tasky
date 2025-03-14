@@ -1,5 +1,6 @@
 {
   "name": "wakeytasky",
+  "productName": "WakeyTasky",
   "version": "1.0.0",
   "description": "task manager for ADHD",
   "main": "main.js",
