@@ -23,5 +23,10 @@
   "homepage": "https://github.com/dannihuyang/WakeyTasky#readme",
   "devDependencies": {
     "electron": "^35.0.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "pg": "^8.14.0",
+    "prisma": "^6.5.0"
   }
 }
