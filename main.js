@@ -8,6 +8,14 @@ const prisma = new PrismaClient();
 // Import our Express server
 const server = require('./app/server');
 
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 function createMainWindow() {
     const mainWindow = new BrowserWindow({
         title: 'Wakey Tasky',
@@ -17,8 +25,8 @@ function createMainWindow() {
         transparent: true,
         resizable: false,
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            nodeIntegration: false,
+            contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         }
     });
