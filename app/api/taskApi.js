@@ -6,64 +6,127 @@ const prisma = new PrismaClient();
 // POST endpoint to generate tasks from user input
 router.post('/generate-task', async (req, res) => {
   try {
-    const { text } = req.body;
+    console.log('Received request body:', req.body);
+    const { text, startTime, endTime } = req.body;
     
+    // Validate required fields
     if (!text) {
-      return res.status(400).json({ error: 'Text input is required' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Task text content is required' 
+      });
     }
 
-    // Create a new user input record
-    const userInput = await prisma.userInput.create({
-      data: {
-        text,
-        processed: false,
-      }
-    });
+    // Create user input record
+    let userInput;
+    try {
+      userInput = await prisma.userInput.create({
+        data: {
+          text,
+          processed: false,
+        }
+      });
+      console.log('Created user input:', userInput);
+    } catch (dbError) {
+      console.error('Error creating user input:', dbError);
+      return res.status(500).json({
+        success: false,
+        error: 'Database error while creating user input',
+        details: dbError.message
+      });
+    }
 
-    // Here you would typically have some logic to analyze the text
-    // and determine what tasks to create. For now, I'll create a simple task.
-    
-    // Get tomorrow at 9 AM for scheduling
+    // Process date and time
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
     
-    const task = await prisma.task.create({
-      data: {
-        inputId: userInput.id,
-        title: `Task from: ${text.substring(0, 30)}...`,
-        status: 'PENDING',
-        scheduledTime: tomorrow,
-        application: 'calendar',
-        subtasks: {
-          create: [
-            {
-              title: 'Prepare for task',
-              status: 'PENDING',
-              duration: 30 // 30 minutes
-            },
-            {
-              title: 'Complete task',
-              status: 'PENDING',
-              duration: 60 // 60 minutes
-            }
-          ]
-        }
-      },
-      include: {
-        subtasks: true
+    // Set scheduled start time
+    let scheduledDateTime = new Date(tomorrow);
+    if (startTime) {
+      try {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        scheduledDateTime.setHours(hours, minutes, 0, 0);
+      } catch (e) {
+        console.error('Error parsing start time:', e);
+        // Use default value 9:00 AM
+        scheduledDateTime.setHours(9, 0, 0, 0);
       }
+    } else {
+      scheduledDateTime.setHours(9, 0, 0, 0);
+    }
+    
+    // Set end time
+    let endDateTime = null;
+    if (endTime) {
+      try {
+        endDateTime = new Date(tomorrow);
+        const [hours, minutes] = endTime.split(':').map(Number);
+        endDateTime.setHours(hours, minutes, 0, 0);
+      } catch (e) {
+        console.error('Error parsing end time:', e);
+        // If parsing fails, keep as null
+      }
+    }
+    
+    console.log('Processed times:', {
+      startTime,
+      endTime,
+      scheduledDateTime,
+      endDateTime
     });
+    
+    // Create task
+    let task;
+    try {
+      task = await prisma.task.create({
+        data: {
+          inputId: userInput.id,
+          title: `Task: ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`,
+          status: 'PENDING',
+          scheduledTime: scheduledDateTime,
+          endTime: endDateTime,
+          application: 'calendar',
+          subtasks: {
+            create: [
+              {
+                title: 'Prepare for task',
+                status: 'PENDING',
+                duration: 30 // 30 minutes
+              },
+              {
+                title: 'Complete task',
+                status: 'PENDING',
+                duration: 60 // 60 minutes
+              }
+            ]
+          }
+        },
+        include: {
+          subtasks: true
+        }
+      });
+      console.log('Created task:', JSON.stringify(task, null, 2));
+    } catch (dbError) {
+      console.error('Error creating task:', dbError);
+      return res.status(500).json({
+        success: false,
+        error: 'Database error while creating task',
+        details: dbError.message
+      });
+    }
 
-    // Log the task object to see what's actually returned
-    console.log('Created task:', JSON.stringify(task, null, 2));
+    // Update user input as processed
+    try {
+      await prisma.userInput.update({
+        where: { id: userInput.id },
+        data: { processed: true }
+      });
+    } catch (dbError) {
+      console.error('Error updating user input status:', dbError);
+      // Continue returning results since the main task was created
+    }
 
-    // Update the userInput as processed
-    await prisma.userInput.update({
-      where: { id: userInput.id },
-      data: { processed: true }
-    });
-
+    // Return success response
     res.status(201).json({
       success: true,
       data: {
@@ -82,7 +145,7 @@ router.post('/generate-task', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error generating task:', error);
+    console.error('Error generating task (uncaught):', error);
     res.status(500).json({
       success: false,
       error: 'Failed to generate task',
@@ -166,6 +229,11 @@ router.get('/debug-tasks', async (req, res) => {
     console.error('Error fetching tasks:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// 添加一个简单的测试端点
+router.get('/ping', (req, res) => {
+  res.json({ success: true, message: 'pong' });
 });
 
 // Clean up Prisma when the app is shutting down
