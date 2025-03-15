@@ -241,14 +241,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize time inputs
     initializeTimeInputs();
     
-    // Initially, show input form and hide minimized icon
-    minimizedIcon.style.display = 'none';
-    inputContainer.style.display = 'flex';
+    // Initially, show icon and hide other containers
+    minimizedIcon.style.display = 'flex';  // or 'block' depending on your CSS
+    inputContainer.style.display = 'none';
     taskListContainer.style.display = 'none';
     
-    // Load tasks on startup
+    // Load tasks on startup (but don't automatically show them)
     loadTasks().then(hasItems => {
-        taskListContainer.style.display = hasItems ? 'flex' : 'none';
+        // Don't change display yet, let user click the icon first
+        console.log(`${hasItems ? 'Tasks loaded' : 'No tasks found'}`);
     });
     
     // Handle minimize/maximize

@@ -6,7 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Import our Express server
-const server = require('./app/server');
+const server = require('./server');
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
@@ -35,7 +35,7 @@ function createMainWindow() {
     mainWindow.setMenuBarVisibility(false);
     
     // Load the HTML file
-    mainWindow.loadFile(path.join(__dirname, './app/index.html'));
+    mainWindow.loadFile(path.join(__dirname, './renderer/index.html'));
 }
 
 app.whenReady().then(() => {
