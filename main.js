@@ -35,7 +35,7 @@ function createMainWindow() {
     mainWindow.setMenuBarVisibility(false);
     
     // Load the HTML file
-    mainWindow.loadFile(path.join(__dirname, './app/index.html'));
+    mainWindow.loadFile(path.join(__dirname, './renderer/index.html'));
 }
 
 app.whenReady().then(() => {
