@@ -1,5 +1,12 @@
 const {app, BrowserWindow} = require('electron');
 const path = require('path');
+const { PrismaClient } = require('@prisma/client');
+
+// Initialize Prisma
+const prisma = new PrismaClient();
+
+// Import our Express server
+const server = require('./app/server');
 
 function createMainWindow() {
     const mainWindow = new BrowserWindow({
@@ -11,7 +18,8 @@ function createMainWindow() {
         resizable: false,
         webPreferences: {
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            preload: path.join(__dirname, 'preload.js')
         }
     });
 
@@ -38,4 +46,42 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+// Quit when all windows are closed, except on macOS
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createMainWindow();
+    }
+});
+
+// Clean up resources before exiting
+app.on('before-quit', async () => {
+    await prisma.$disconnect();
+    server.close();
+});
+
+// Quit when all windows are closed, except on macOS
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
+
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createMainWindow();
+    }
+});
+
+// Clean up resources before exiting
+app.on('before-quit', async () => {
+    await prisma.$disconnect();
+    server.close();
 });
