@@ -6,7 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Import our Express server
-const server = require('./app/server');
+const server = require('./server');
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);

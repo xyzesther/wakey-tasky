@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const taskApi = require('../api/taskApi');
+const taskApi = require('./api/taskApi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
