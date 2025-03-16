@@ -6,7 +6,15 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Import our Express server
-const server = require('./app/server');
+const server = require('./server');
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 function createMainWindow() {
     const mainWindow = new BrowserWindow({
@@ -17,8 +25,8 @@ function createMainWindow() {
         transparent: true,
         resizable: false,
         webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
+            nodeIntegration: false,
+            contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         }
     });
@@ -27,7 +35,7 @@ function createMainWindow() {
     mainWindow.setMenuBarVisibility(false);
     
     // Load the HTML file
-    mainWindow.loadFile(path.join(__dirname, './app/index.html'));
+    mainWindow.loadFile(path.join(__dirname, './renderer/index.html'));
 }
 
 app.whenReady().then(() => {
