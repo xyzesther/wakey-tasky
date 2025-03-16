@@ -68,63 +68,78 @@ minimizedIcon.addEventListener('click', () => {
 // Mock function to create a task (without backend)
 function createTask(text, start, end) {
     // Create a task card
-    const taskCard = document.createElement('div');
-    taskCard.className = 'task-card';
-    
-    // Add title
-    const taskTitle = document.createElement('div');
-    taskTitle.className = 'task-title';
+    const taskCard = document.createElement("div");
+    taskCard.className = "task-card";
+
+    // Create task header (task title + start button)
+    const taskHeader = document.createElement("div");
+    taskHeader.className = "task-header";
+
+    // Task title
+    const taskTitle = document.createElement("div");
+    taskTitle.className = "task-title";
     taskTitle.textContent = text;
-    taskCard.appendChild(taskTitle);
     
-    // Add time
-    const taskTime = document.createElement('div');
-    taskTime.className = 'task-time';
-    taskTime.textContent = `${start} - ${end}`;
-    taskCard.appendChild(taskTime);
-    
-    // Add subtasks (3 of them)
-    const subtasks = document.createElement('div');
-    subtasks.className = 'subtasks';
-    
-    // Create 3 mock subtasks
+    // Add "Start" button next to the task title
+    const startButton = document.createElement("button");
+    startButton.className = "start-button";
+    startButton.textContent = "Start";
+
+    // Add event listener to the "Start" button
+    startButton.addEventListener("click", () => {
+        startButton.textContent = "In Progress...";
+        startButton.disabled = true;
+        startButton.style.backgroundColor = "#bbb"; // Grayed out
+        startButton.style.cursor = "not-allowed";
+
+        // Simulate task execution
+        setTimeout(() => {
+            startButton.textContent = "Completed";
+            startButton.style.backgroundColor = "#8bc34a"; // Green for success
+        }, 5000);
+    });
+
+    // Append title and button inside task header
+    taskHeader.appendChild(taskTitle);
+    taskHeader.appendChild(startButton);
+
+    // Task time range
+    const taskTime = document.createElement("div");
+    taskTime.className = "task-time";
+    taskTime.innerHTML = `<i class="fas fa-clock"></i> ${start} - ${end}`;
+
+    // Add subtasks
+    const subtasks = document.createElement("div");
+    subtasks.className = "subtasks";
+
     for (let i = 1; i <= 3; i++) {
-        const subtask = document.createElement('div');
-        subtask.className = 'subtask-item';
-        
-        const subtaskTitle = document.createElement('div');
-        subtaskTitle.className = 'subtask-title';
-        subtaskTitle.textContent = `Subtask ${i} for "${text}"`;
-        
-        const subtaskDuration = document.createElement('div');
-        subtaskDuration.className = 'subtask-duration';
+        const subtask = document.createElement("div");
+        subtask.className = "subtask-item";
+
+        const subtaskLeft = document.createElement("div");
+        subtaskLeft.className = "subtask-left";
+        subtaskLeft.innerHTML = `<input type="checkbox"> <span>Subtask ${i}</span>`;
+
+        const subtaskDuration = document.createElement("div");
+        subtaskDuration.className = "subtask-duration";
         subtaskDuration.textContent = `${Math.floor(Math.random() * 30) + 15} min`;
-        
-        subtask.appendChild(subtaskTitle);
+
+        subtask.appendChild(subtaskLeft);
         subtask.appendChild(subtaskDuration);
         subtasks.appendChild(subtask);
     }
-    
+
+    // Append all elements to task card
+    taskCard.appendChild(taskHeader);
+    taskCard.appendChild(taskTime);
     taskCard.appendChild(subtasks);
-    
-    // Add to task list container
-    taskListContainer.style.display = 'block';
+
+    // Append task card to task list container
+    taskListContainer.style.display = "block";
     taskListContainer.appendChild(taskCard);
-    
-    // Reset input
-    taskInput.value = '';
-    
-    // Set default times if they were empty
-    if (!startTime.value) {
-        const now = new Date();
-        startTime.value = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-    }
-    
-    if (!endTime.value) {
-        const later = new Date();
-        later.setHours(later.getHours() + 1);
-        endTime.value = `${later.getHours().toString().padStart(2, '0')}:${later.getMinutes().toString().padStart(2, '0')}`;
-    }
+
+    // Reset input field
+    taskInput.value = "";
 }
 
 // Handle send button click
