@@ -9,38 +9,38 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model UserInput {
-  id         String  @id @default(uuid())
+  id         String   @id @default(uuid())
   text       String
   createdAt  DateTime @default(now())
-  processed  Boolean @default(false)
+  processed  Boolean  @default(false)
 
   tasks      Task[]
 }
 
 model Task {
-  id            String  @id @default(uuid())
+  id            String    @id @default(uuid())
   inputId       String
+  input         UserInput @relation(fields: [inputId], references: [id])
   title         String
-  status        String
+  status        String    @default("PENDING")
   scheduledTime DateTime
   endTime       DateTime?
-  application   String?
-
-  input         UserInput @relation(fields: [inputId], references: [id])
+  application   String    @default("calendar")
+  createdAt     DateTime  @default(now())
   subtasks      Subtask[]
 }
 
 model Subtask {
-  id      String  @id @default(uuid())
-  taskId  String
-  title   String
-  status  String
-  duration Int
-
-  task    Task @relation(fields: [taskId], references: [id])
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id])
+  title     String
+  status    String   @default("PENDING")
+  duration  Int      @default(30)
+  createdAt DateTime @default(now())
 }
