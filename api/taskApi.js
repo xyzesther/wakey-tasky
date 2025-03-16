@@ -236,6 +236,45 @@ router.get('/ping', (req, res) => {
   res.json({ success: true, message: 'pong' });
 });
 
+// DELETE endpoint to remove a task by ID
+router.delete('/tasks/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // First, delete the subtasks to avoid foreign key constraints
+    await prisma.subtask.deleteMany({
+      where: {
+        taskId: id
+      }
+    });
+    
+    // Then delete the task
+    const deletedTask = await prisma.task.delete({
+      where: { id }
+    });
+    
+    if (!deletedTask) {
+      return res.status(404).json({
+        success: false,
+        error: 'Task not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Task deleted successfully',
+      data: deletedTask
+    });
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete task',
+      details: error.message
+    });
+  }
+});
+
 // Clean up Prisma when the app is shutting down
 process.on('beforeExit', async () => {
   await prisma.$disconnect();
