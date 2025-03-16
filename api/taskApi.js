@@ -145,10 +145,20 @@ router.post('/generate-task', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Error generating task (uncaught):', error);
+    // Check for common SQLite errors
+    if (error.code === 'SQLITE_CONSTRAINT') {
+      console.error('SQLite constraint violation:', error);
+      return res.status(400).json({
+        success: false,
+        error: 'Database constraint violation',
+        details: error.message
+      });
+    }
+    
+    console.error('Database error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to generate task',
+      error: 'Database operation failed',
       details: error.message
     });
   }
