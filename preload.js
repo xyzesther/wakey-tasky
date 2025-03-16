@@ -80,6 +80,25 @@ const api = {
             console.error('Error pinging API:', error);
             return { success: false, message: error.message };
         }
+    },
+    
+    deleteTask: async (id) => {
+        try {
+            const response = await fetch(`${API_URL}/api/tasks/${id}`, {
+                method: 'DELETE',
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API error deleting task:', response.status, errorText);
+                return { success: false, error: `Server error (${response.status})` };
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            return { success: false, error: error.message || 'Network error' };
+        }
     }
 };
 

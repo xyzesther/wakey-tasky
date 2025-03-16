@@ -109,7 +109,12 @@ function addTaskToUI(task) {
     taskCard.innerHTML = `
         <div class="task-header">
             <div class="task-title">${formattedTask.title}</div>
-            <div class="task-time">${startTimeStr} - ${endTimeStr}</div>
+            <div class="task-actions">
+                <div class="task-time">${startTimeStr} - ${endTimeStr}</div>
+                <button class="delete-button" data-id="${formattedTask.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         </div>
         <div class="task-status">${formattedTask.status}</div>
         <div class="subtasks">
@@ -123,6 +128,13 @@ function addTaskToUI(task) {
     `;
     
     taskListContainer.appendChild(taskCard);
+    
+    // Add event listener for the delete button
+    const deleteButton = taskCard.querySelector('.delete-button');
+    deleteButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event from bubbling to the task card
+        deleteTask(formattedTask.id);
+    });
 }
 
 // Load all tasks from API
@@ -230,6 +242,39 @@ function formatTaskData(task) {
         endTime: task.endTime || null,
         subtasks: Array.isArray(task.subtasks) ? task.subtasks : []
     };
+}
+
+// Function to delete a task
+async function deleteTask(taskId) {
+    if (!confirm('Are you sure you want to delete this task?')) {
+        return;
+    }
+    
+    try {
+        const response = await window.api.deleteTask(taskId);
+        
+        if (response.success) {
+            // Remove the task from UI
+            const taskCard = document.querySelector(`.task-card[data-task-id="${taskId}"]`);
+            if (taskCard) {
+                taskCard.remove();
+            }
+            
+            // Check if there are any tasks left
+            if (taskListContainer.children.length === 0) {
+                taskListContainer.style.display = 'none';
+                inputContainer.style.display = 'flex';
+            }
+            
+            console.log('Task deleted successfully');
+        } else {
+            console.error('Failed to delete task:', response.error);
+            showError(response.error || 'Failed to delete task');
+        }
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        showError(`Failed to delete task: ${error.message}`);
+    }
 }
 
 // Event Listeners

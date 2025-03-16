@@ -235,3 +235,29 @@ body {
 .error-button:hover {
     background-color: #0055aa;
 }
+
+/* Add these styles for the delete button */
+.task-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-button {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.delete-button:hover {
+    background-color: #cc0000;
+}
