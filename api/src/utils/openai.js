@@ -1,8 +1,7 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
-const { CATEGORY_COLORS } = require('../config/constants');
+// const { PrismaClient } = require("@prisma/client");
+// const prisma = new PrismaClient();
 const OpenAI = require("openai");
-const { copyFileSync } = require("fs");
+require('dotenv').config();
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -44,8 +43,15 @@ const parseTasks = async (content, currentDateTime) => {
             temperature: 0.3
         });
 
-        const tasks = JSON.parse(response.choices[0].message.content);
-        console.log("Parsed Tasks:", tasks);
+        // Log the raw response content
+        //console.log("Raw Response:", response.choices[0].message.content);
+
+        // Remove markdown code block delimiters
+        const rawContent = response.choices[0].message.content;
+        const jsonContent = rawContent.replace(/```json|```/g, '').trim();
+
+        const tasks = JSON.parse(jsonContent);
+        //console.log("Parsed Tasks:", tasks);
         return tasks;
 
     } catch (error) {
