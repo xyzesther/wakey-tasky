@@ -20,18 +20,61 @@ body {
 
 /* State 1: Minimized Circle */
 .minimized-icon {
-    width: 50px;
-    height: 50px;
-    background-color: #0066cc;
+    width: 60px;
+    height: 60px;
+    background-color: #F8F8F8;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 20px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.25);
     transition: transform 0.2s;
+    position: absolute;
+    z-index: 1000;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.minimized-icon .clock-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.clock-frame {
+    width: 100%;
+    height: 100%;
+    border: 2px solid #151513;
+    border-radius: 4px;
+    background-color: #FEFEFC;
+    position: relative;
+}
+
+.clock-hands {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.clock-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background-color: #151513;
+    border-radius: 50%;
+}
+
+.clock-dot-1 {
+    top: 8px;
+    left: 8px;
+}
+
+.clock-dot-2 {
+    top: 8px;
+    right: 8px;
 }
 
 .minimized-icon:hover {
@@ -261,3 +304,95 @@ body {
 .delete-button:hover {
     background-color: #cc0000;
 }
+
+/* Add these styles for the chatbox interface */
+.chatbox-container {
+    display: none;
+    width: 350px;
+    background-color: #FEFEFC;
+    border-radius: 17px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    flex-direction: column;
+    padding: 15px 11px;
+    gap: 13px;
+}
+
+.window-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 0px 8px;
+    height: 12px;
+}
+
+.window-control {
+    width: 12px;
+    height: 12px;
+    border-radius: 100px;
+    border: 0.5px solid rgba(0, 0, 0, 0.2);
+}
+
+.close-button {
+    background-color: #FF5F57;
+    cursor: pointer;
+}
+
+.minimize-button {
+    background-color: #FEBC2E;
+    cursor: pointer;
+}
+
+.zoom-button {
+    background-color: #28C840;
+    cursor: pointer;
+}
+
+.app-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+.app-icon .clock-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.prompt-bar {
+    background-color: rgba(21, 21, 19, 0.08);
+    border-radius: 25px;
+    padding: 17px 15px 17px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 327px;
+    box-sizing: border-box;
+}
+
+.prompt-text {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: rgba(21, 21, 19, 0.5);
+}
+
+.prompt-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prompt-icon {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    object-fit: contain;
+}
+
+/* Media query to load Manrope font for the chat interface */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');

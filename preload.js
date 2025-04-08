@@ -1,4 +1,4 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 console.log('Preload script starting...');
 
@@ -10,6 +10,24 @@ const api = {
     test: () => {
         console.log('API test function called');
         return 'API is working';
+    },
+    
+    // Resize window (for toggling between minimized and expanded states)
+    resizeWindow: (width, height) => {
+        return ipcRenderer.invoke('resize-window', { width, height });
+    },
+    
+    // Window dragging support
+    startWindowDrag: () => {
+        ipcRenderer.send('window-drag-start');
+    },
+    
+    dragWindow: (mouseX, mouseY) => {
+        ipcRenderer.send('window-drag', { mouseX, mouseY });
+    },
+    
+    endWindowDrag: () => {
+        ipcRenderer.send('window-drag-end');
     },
     
     generateTask: async (text, startTime, endTime) => {
@@ -99,7 +117,41 @@ const api = {
             console.error('Error deleting task:', error);
             return { success: false, error: error.message || 'Network error' };
         }
-    }
+    },
+    
+    // IPC event listeners
+    onShowTaskList: (callback) => {
+        ipcRenderer.on('show-task-list', () => callback());
+    },
+    
+    onShowTaskCreation: (callback) => {
+        ipcRenderer.on('show-task-creation', () => callback());
+    },
+    
+    // Open chatbox window
+    openChatbox: () => {
+        return ipcRenderer.invoke('open-chatbox');
+    },
+    
+    // Close current window (for chatbox)
+    closeWindow: () => {
+        ipcRenderer.send('close-window');
+    },
+    
+    // Minimize current window (for chatbox)
+    minimizeWindow: () => {
+        ipcRenderer.send('minimize-window');
+    },
+    
+    // Open task list view
+    openTaskList: () => {
+        ipcRenderer.send('open-task-list');
+    },
+    
+    // Open task creation view
+    openTaskCreation: () => {
+        ipcRenderer.send('open-task-creation');
+    },
 };
 
 // Expose the API
