@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
 const taskApi = require("./api/src/routes/taskRoutes");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
