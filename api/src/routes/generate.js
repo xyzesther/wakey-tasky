@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const { generateSubtasksWithAI } = require("../../utils/openai");
 const requireAuth = require("../../middleware/auth");
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(); //创建prisma客户端
 //检查参数是否提供
 router.post("/", requireAuth, async (req, res) => {
 	const { prompt } = req.body;
