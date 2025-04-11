@@ -1,21 +1,34 @@
 const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
-const { parseTasks } = require("../../utils/openai"); // parseTasks
-const requireAuth = require("../../middleware/auth");
+const { parseTasks } = require("../utils/openai"); // parseTasks
+//const requireAuth = require("../middleware/auth");
 
 const prisma = new PrismaClient();
 
-router.post("/", requireAuth, async (req, res) => {
-	const { prompt } = req.body;
+router.post("/", async (req, res) => {
+	const { prompt, userId } = req.body;
 
-	// ✅ 1. 检查输入
+	// Check input
 	if (!prompt || prompt.trim() === "") {
 		return res.status(400).json({ error: "Prompt is required." });
 	}
 
+	if (!userId) {
+		return res.status(400).json({ error: "User ID is required." });
+	}
+
 	try {
-		//  2. 调用 AI 拆成多个“主任务”
+		// Get user
+		const user = await prisma.user.findUnique({
+			where: { id: userId },
+		});
+
+		if (!user) {
+			return res.status(404).json({ error: "User not found." });
+		}
+
+		// Generate tasks using AI
 		const currentDateTime = new Date().toISOString();
 		const tasksFromAI = await parseTasks(prompt, currentDateTime);
 
@@ -24,20 +37,41 @@ router.post("/", requireAuth, async (req, res) => {
 			return res.status(500).json({ error: "AI failed to generate tasks." });
 		}
 
-		// 4. 存入数据库，每个任务是 mainTask
+		console.log("Received prompt:", prompt);
+		console.log("Generated tasks:", tasksFromAI);
+
+		// Create main tasks in database (without subtasks)
 		const createdTasks = await Promise.all(
-			tasksFromAI.map((t) =>
-				prisma.mainTask.create({
+			tasksFromAI.map(async (t) => {
+				// Create the main task
+				return prisma.mainTask.create({
 					data: {
 						title: t.title,
 						description: t.description || "",
-						userId: req.user.id,
+						userId: userId,
+						statusId: "PENDING",
 					},
-				})
-			)
+					include: {
+						status: true,
+					},
+				});
+			})
 		);
 
-		//5. 返回创建成功的所有任务
+		// Update user's task count flag if needed
+		if (!user.hasAddedThreeMainTasks && createdTasks.length > 0) {
+			const taskCount = await prisma.mainTask.count({
+				where: { userId: userId },
+			});
+
+			if (taskCount >= 3) {
+				await prisma.user.update({
+					where: { id: userId },
+					data: { hasAddedThreeMainTasks: true },
+				});
+			}
+		}
+
 		res.status(201).json({ tasks: createdTasks });
 	} catch (err) {
 		console.error("Error generating tasks:", err);
