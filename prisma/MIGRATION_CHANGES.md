@@ -1,18 +1,26 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+# Prisma Migration Changes
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+## 20250411211347_updated_schema
 
-generator client {
-  provider = "prisma-client-js"
-}
+- Updated the database schema to include:
+  - Modified User model structure
+  - Added MainTask model
+  - Added Subtask model
+  - Established relationships between models
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
+## 20250411214702_add_status_model
 
+- Added Status model with fields:
+  - id: String (Primary Key)
+  - name: String
+- Created relationships:
+  - Status to MainTask (one-to-many)
+  - Status to Subtask (one-to-many)
+- Added default status "PENDING" for both MainTask and Subtask
+
+## Current Schema Structure
+
+```prisma
 model User {
   id                     String     @id @default(uuid())
   hasAddedThreeMainTasks Boolean    @default(false)
@@ -48,3 +56,4 @@ model Status {
   mainTasks MainTask[]
   subtasks  Subtask[]
 }
+```
