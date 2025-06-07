@@ -20,31 +20,29 @@ model User {
 }
 
 model MainTask {
-  id          String    @id @default(uuid())
+  id          String      @id @default(uuid())
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
   title       String
   description String?
   subtasks    Subtask[]
-  status      Status    @relation(fields: [statusId], references: [id])
-  statusId    String    @default("PENDING")
+  status      TaskStatus  @default(PENDING)
 }
 
 model Subtask {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   taskId      String
-  task        MainTask  @relation(fields: [taskId], references: [id])
+  task        MainTask    @relation(fields: [taskId], references: [id])
   title       String
   description String?
   startAt     DateTime?
   endAt       DateTime?
-  status      Status    @relation(fields: [statusId], references: [id])
-  statusId    String    @default("PENDING")
+  status      TaskStatus  @default(PENDING)
 }
 
-model Status {
-  id        String     @id
-  name      String
-  mainTasks MainTask[]
-  subtasks  Subtask[]
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

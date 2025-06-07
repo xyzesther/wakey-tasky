@@ -8,39 +8,18 @@ router.post('/generate-task', async (req, res) => {
   try {
     console.log('Received request body:', req.body);
     const { text, startTime, endTime } = req.body;
-    
-    // Validate required fields
-    if (!text) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Task text content is required' 
-      });
-    }
 
-    // Create user input record
-    let userInput;
-    try {
-      userInput = await prisma.userInput.create({
-        data: {
-          text,
-          processed: false,
-        }
-      });
-      console.log('Created user input:', userInput);
-    } catch (dbError) {
-      console.error('Error creating user input:', dbError);
-      return res.status(500).json({
+    if (!text) {
+      return res.status(400).json({
         success: false,
-        error: 'Database error while creating user input',
-        details: dbError.message
+        error: 'Task text content is required'
       });
     }
 
     // Process date and time
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Set scheduled start time
+
     let scheduledDateTime = new Date(tomorrow);
     if (startTime) {
       try {
@@ -48,14 +27,12 @@ router.post('/generate-task', async (req, res) => {
         scheduledDateTime.setHours(hours, minutes, 0, 0);
       } catch (e) {
         console.error('Error parsing start time:', e);
-        // Use default value 9:00 AM
         scheduledDateTime.setHours(9, 0, 0, 0);
       }
     } else {
       scheduledDateTime.setHours(9, 0, 0, 0);
     }
-    
-    // Set end time
+
     let endDateTime = null;
     if (endTime) {
       try {
@@ -64,116 +41,61 @@ router.post('/generate-task', async (req, res) => {
         endDateTime.setHours(hours, minutes, 0, 0);
       } catch (e) {
         console.error('Error parsing end time:', e);
-        // If parsing fails, keep as null
       }
     }
-    
-    console.log('Processed times:', {
-      startTime,
-      endTime,
-      scheduledDateTime,
-      endDateTime
-    });
-    
-    // Create task
-    let task;
-    try {
-      task = await prisma.task.create({
-        data: {
-          inputId: userInput.id,
-          title: `Task: ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`,
-          status: 'PENDING',
-          scheduledTime: scheduledDateTime,
-          endTime: endDateTime,
-          application: 'calendar',
-          subtasks: {
-            create: [
-              {
-                title: 'Prepare for task',
-                status: 'PENDING',
-                duration: 30 // 30 minutes
-              },
-              {
-                title: 'Complete task',
-                status: 'PENDING',
-                duration: 60 // 60 minutes
-              }
-            ]
-          }
-        },
-        include: {
-          subtasks: true
+
+    // Create main task and subtasks
+    const task = await prisma.mainTask.create({
+      data: {
+        title: `Task: ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`,
+        description: text,
+        status: 'PENDING',
+        subtasks: {
+          create: [
+            {
+              title: 'Prepare for task',
+              status: 'PENDING',
+              startAt: scheduledDateTime,
+              endAt: new Date(scheduledDateTime.getTime() + 30 * 60000)
+            },
+            {
+              title: 'Complete task',
+              status: 'PENDING',
+              startAt: new Date(scheduledDateTime.getTime() + 30 * 60000),
+              endAt: endDateTime || new Date(scheduledDateTime.getTime() + 90 * 60000)
+            }
+          ]
         }
-      });
-      console.log('Created task:', JSON.stringify(task, null, 2));
-    } catch (dbError) {
-      console.error('Error creating task:', dbError);
-      return res.status(500).json({
-        success: false,
-        error: 'Database error while creating task',
-        details: dbError.message
-      });
-    }
+      },
+      include: {
+        subtasks: true
+      }
+    });
 
-    // Update user input as processed
-    try {
-      await prisma.userInput.update({
-        where: { id: userInput.id },
-        data: { processed: true }
-      });
-    } catch (dbError) {
-      console.error('Error updating user input status:', dbError);
-      // Continue returning results since the main task was created
-    }
-
-    // Return success response
     res.status(201).json({
       success: true,
-      data: {
-        userInput,
-        task: {
-          id: task.id,
-          inputId: task.inputId,
-          title: task.title,
-          status: task.status,
-          scheduledTime: task.scheduledTime,
-          endTime: task.endTime,
-          application: task.application,
-          subtasks: task.subtasks
-        }
-      }
+      data: task
     });
-    
+
   } catch (error) {
-    // Check for common SQLite errors
-    if (error.code === 'SQLITE_CONSTRAINT') {
-      console.error('SQLite constraint violation:', error);
-      return res.status(400).json({
-        success: false,
-        error: 'Database constraint violation',
-        details: error.message
-      });
-    }
-    
-    console.error('Database error:', error);
+    console.error('Error creating task:', error);
     res.status(500).json({
       success: false,
-      error: 'Database operation failed',
+      error: 'Failed to create task',
       details: error.message
     });
   }
 });
 
-// GET endpoint to retrieve all tasks
+// GET all tasks
 router.get('/tasks', async (req, res) => {
   try {
-    const tasks = await prisma.task.findMany({
+    const tasks = await prisma.mainTask.findMany({
       include: {
-        subtasks: true,
-        input: true
+        subtasks: true
       }
     });
-    
+
     res.json({
       success: true,
       data: tasks
@@ -188,26 +110,25 @@ router.get('/tasks', async (req, res) => {
   }
 });
 
-// GET endpoint to retrieve a specific task by ID
+// GET single task by ID
 router.get('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    const task = await prisma.task.findUnique({
+
+    const task = await prisma.mainTask.findUnique({
       where: { id },
       include: {
-        subtasks: true,
-        input: true
+        subtasks: true
       }
     });
-    
+
     if (!task) {
       return res.status(404).json({
         success: false,
         error: 'Task not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: task
@@ -222,58 +143,57 @@ router.get('/tasks/:id', async (req, res) => {
   }
 });
 
-// Add this endpoint for debugging
-router.get('/debug-tasks', async (req, res) => {
+// PATCH: update task status
+router.patch('/tasks/:id/status', async (req, res) => {
   try {
-    const tasks = await prisma.task.findMany({
-      include: {
-        subtasks: true
-      }
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status value'
+      });
+    }
+
+    const updatedTask = await prisma.mainTask.update({
+      where: { id },
+      data: { status }
     });
-    
+
     res.json({
-      count: tasks.length,
-      tasks: tasks
+      success: true,
+      message: 'Task status updated',
+      data: updatedTask
     });
   } catch (error) {
-    console.error('Error fetching tasks:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error updating task status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update task status',
+      details: error.message
+    });
   }
 });
 
-// 添加一个简单的测试端点
-router.get('/ping', (req, res) => {
-  res.json({ success: true, message: 'pong' });
-});
-
-// DELETE endpoint to remove a task by ID
+// DELETE task and subtasks
 router.delete('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // First, delete the subtasks to avoid foreign key constraints
+
     await prisma.subtask.deleteMany({
-      where: {
-        taskId: id
-      }
+      where: { taskId: id }
     });
-    
-    // Then delete the task
-    const deletedTask = await prisma.task.delete({
+
+    const deleted = await prisma.mainTask.delete({
       where: { id }
     });
-    
-    if (!deletedTask) {
-      return res.status(404).json({
-        success: false,
-        error: 'Task not found'
-      });
-    }
-    
+
     res.json({
       success: true,
       message: 'Task deleted successfully',
-      data: deletedTask
+      data: deleted
     });
   } catch (error) {
     console.error('Error deleting task:', error);
@@ -285,9 +205,88 @@ router.delete('/tasks/:id', async (req, res) => {
   }
 });
 
-// Clean up Prisma when the app is shutting down
+// Debugging route
+router.get('/debug-tasks', async (req, res) => {
+  try {
+    const tasks = await prisma.mainTask.findMany({
+      include: {
+        subtasks: true
+      }
+    });
+
+    res.json({
+      count: tasks.length,
+      tasks
+    });
+  } catch (error) {
+    console.error('Error fetching debug tasks:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Health check
+router.get('/ping', (req, res) => {
+  res.json({ success: true, message: 'pong' });
+});
+
+// Cleanup
 process.on('beforeExit', async () => {
   await prisma.$disconnect();
 });
 
-module.exports = router; 
+// PATCH endpoint to update subtask status
+router.patch('/subtasks/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status value'
+      });
+    }
+
+    // Update the subtask's status
+    const updatedSubtask = await prisma.subtask.update({
+      where: { id },
+      data: { status },
+      include: {
+        task: {
+          include: {
+            subtasks: true
+          }
+        }
+      }
+    });
+
+    // Check if all subtasks are now COMPLETED
+    const { task } = updatedSubtask;
+    const allCompleted = task.subtasks.every(s => s.status === 'COMPLETED');
+
+    if (allCompleted && task.status !== 'COMPLETED') {
+      await prisma.mainTask.update({
+        where: { id: task.id },
+        data: { status: 'COMPLETED' }
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Subtask status updated',
+      data: updatedSubtask
+    });
+
+  } catch (error) {
+    console.error('Error updating subtask status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update subtask status',
+      details: error.message
+    });
+  }
+});
+
+
+module.exports = router;
