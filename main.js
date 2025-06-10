@@ -115,8 +115,8 @@ function createChatboxWindow() {
         width: 370, // Slightly wider to ensure full content display
         height: 180, // Increased height to accommodate the layout
         frame: false,
-        transparent: true,
-        resizable: false,
+        transparent: false,
+        resizable: true,
         alwaysOnTop: false, // Don't keep on top
         skipTaskbar: false, // Show in taskbar
         movable: true,
@@ -216,6 +216,15 @@ ipcMain.on('open-task-creation', () => {
     // Hide chatbox if it exists (don't close it)
     if (chatboxWindow) {
         chatboxWindow.close();
+    }
+});
+
+ipcMain.handle('open-talkwithai', () => {
+    const filePath = path.join(__dirname, './renderer/talkwithai.html');
+    console.log('main open-talkwithai, loading:', filePath);
+    if (chatboxWindow) {
+        chatboxWindow.loadFile(filePath);
+        chatboxWindow.setSize(350, 480); // Set size for Talk with AI view
     }
 });
 

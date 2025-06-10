@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Talk with AI - WakeyTasky</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="talkwithai-container">
+        <div class="talkwithai-messages" id="aiMessages">
+            <!-- 聊天消息气泡区域 -->
+            <div class="ai-bubble">
+                <img class="ai-avatar" src="../assets/talking_icon.svg" alt="AI" />
+                <div class="ai-bubble-content">
+                    Hi! How can I help you with your tasks today?
+                </div>
+            </div>
+            <div class="user-bubble">
+                <div class="user-bubble-content">
+                    Help me plan my day.
+                </div>
+            </div>
+        </div>
+        <div class="talkwithai-inputbar">
+            <input type="text" id="aiInput" placeholder="Type your message..." autocomplete="off" />
+            <button id="aiSendBtn" class="talkwithai-send-btn">
+                <img src="../assets/download_icon.svg" alt="Send" />
+            </button>
+        </div>
+    </div>
+    <script>
+        // 返回按钮逻辑
+        document.getElementById('talkwithaiBackBtn').onclick = () => {
+            window.api.openChatbox();
+        };
+        // 发送按钮逻辑（可根据实际需求完善）
+        document.getElementById('aiSendBtn').onclick = () => {
+            const input = document.getElementById('aiInput');
+            if (input.value.trim()) {
+                // 这里只做前端演示，实际可调用AI接口
+                const msg = document.createElement('div');
+                msg.className = 'user-bubble';
+                msg.innerHTML = `<div class="user-bubble-content">${input.value}</div>
+                    <img class="user-avatar" src="../assets/user_avatar.svg" alt="User" />`;
+                document.getElementById('aiMessages').appendChild(msg);
+                input.value = '';
+                document.getElementById('aiMessages').scrollTop = document.getElementById('aiMessages').scrollHeight;
+            }
+        };
+    </script>
+</body>
+</html>

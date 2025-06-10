@@ -152,9 +152,15 @@ const api = {
     openTaskCreation: () => {
         ipcRenderer.send('open-task-creation');
     },
-};
+    
+    // Open Talk with AI window
+    openTalkWithAI: () => {
+        console.log('preload openTalkWithAI');
+        return ipcRenderer.invoke('open-talkwithai');
+    }
+}
 
 // Expose the API
 contextBridge.exposeInMainWorld('api', api);
 
-console.log('Preload script completed. API exposed:', Object.keys(api)); 
+console.log('Preload script completed. API exposed:', Object.keys(api));
