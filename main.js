@@ -8,6 +8,10 @@ const prisma = new PrismaClient();
 // Import our Express server
 const server = require('./server');
 
+// ----------------------------------------------------------------------------
+// Application window creation and management
+// ----------------------------------------------------------------------------
+
 // Store references to windows
 let mainWindow;
 let chatboxWindow;
@@ -52,6 +56,59 @@ function createMainWindow() {
     // Load the HTML file
     mainWindow.loadFile(path.join(__dirname, './renderer/index.html'));
 }
+
+
+
+// Function to create the chatbox window
+function createChatboxWindow() {
+    // If chatbox window already exists, just focus it and return
+    if (chatboxWindow) {
+        chatboxWindow.focus();
+        return;
+    }
+    
+    chatboxWindow = new BrowserWindow({
+        title: 'WakeyTasky Chat',
+        width: 370, // Slightly wider to ensure full content display
+        height: 180, // Increased height to accommodate the layout
+        frame: false,
+        transparent: false,
+        resizable: true,
+        alwaysOnTop: false, // Don't keep on top
+        skipTaskbar: false, // Show in taskbar
+        movable: true,
+        show: true,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
+        }
+    });
+    
+    // Hide the menu bar
+    chatboxWindow.setMenuBarVisibility(false);
+    
+    // Load the chatbox HTML file
+    chatboxWindow.loadFile(path.join(__dirname, './renderer/chatbox.html'));
+    
+    // Center the window on screen
+    chatboxWindow.center();
+    
+    // Handle window close
+    chatboxWindow.on('closed', () => {
+        chatboxWindow = null;
+        
+        // Show the main window again when the chatbox is closed
+        if (mainWindow) {
+            mainWindow.show();
+        }
+    });
+}
+
+
+// ----------------------------------------------------------------------------
+// IPC Handlers
+// ----------------------------------------------------------------------------
 
 // Handle IPC resize-window event
 ipcMain.handle('resize-window', (event, { width, height }) => {
@@ -101,52 +158,6 @@ ipcMain.on('window-drag-end', () => {
         mainWindow.webContents.send('window-drag-disabled');
     }
 });
-
-// Function to create the chatbox window
-function createChatboxWindow() {
-    // If chatbox window already exists, just focus it and return
-    if (chatboxWindow) {
-        chatboxWindow.focus();
-        return;
-    }
-    
-    chatboxWindow = new BrowserWindow({
-        title: 'WakeyTasky Chat',
-        width: 370, // Slightly wider to ensure full content display
-        height: 180, // Increased height to accommodate the layout
-        frame: false,
-        transparent: false,
-        resizable: true,
-        alwaysOnTop: false, // Don't keep on top
-        skipTaskbar: false, // Show in taskbar
-        movable: true,
-        show: true,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
-        }
-    });
-    
-    // Hide the menu bar
-    chatboxWindow.setMenuBarVisibility(false);
-    
-    // Load the chatbox HTML file
-    chatboxWindow.loadFile(path.join(__dirname, './renderer/chatbox.html'));
-    
-    // Center the window on screen
-    chatboxWindow.center();
-    
-    // Handle window close
-    chatboxWindow.on('closed', () => {
-        chatboxWindow = null;
-        
-        // Show the main window again when the chatbox is closed
-        if (mainWindow) {
-            mainWindow.show();
-        }
-    });
-}
 
 // IPC handler to open chatbox window
 ipcMain.handle('open-chatbox', (event) => {
@@ -219,6 +230,7 @@ ipcMain.on('open-task-creation', () => {
     }
 });
 
+// IPC handler to open the Talk with AI view
 ipcMain.handle('open-talkwithai', () => {
     const filePath = path.join(__dirname, './renderer/talkwithai.html');
     console.log('main open-talkwithai, loading:', filePath);
@@ -227,6 +239,34 @@ ipcMain.handle('open-talkwithai', () => {
         chatboxWindow.setSize(350, 480); // Set size for Talk with AI view
     }
 });
+
+// IPC handler to open the Task List window
+ipcMain.handle('open-tasklist-window', () => {
+    console.log('main: open-tasklist-window received');
+    // 创建新窗口并加载 tasklist.html
+    const { width, height, x, y } = chatboxWindow.getBounds();
+    const taskListWindow = new BrowserWindow({
+        width: 350,
+        height: 480,
+        x: x + width + 10, // 右侧偏移10像素
+        y: y,
+        resizable: true,
+        frame: false,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false
+        }
+    });
+    taskListWindow.loadFile(path.join(__dirname, './renderer/tasklist.html'));
+    taskListWindow.on('ready-to-show', () => {
+        console.log('taskListWindow ready to show');
+    });
+});
+
+// ----------------------------------------------------------------------------
+// App lifecycle events
+// ----------------------------------------------------------------------------
 
 app.whenReady().then(() => {
     createMainWindow();

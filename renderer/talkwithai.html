@@ -6,6 +6,12 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="window-controls">
+        <div class="window-control close-button" id="chatCloseButton"></div>
+        <div class="window-control minimize-button" id="chatMinimizeButton"></div>
+        <div class="window-control zoom-button"></div>
+    </div>
+    
     <div class="talkwithai-container">
         <div class="talkwithai-messages" id="aiMessages">
             <!-- 聊天消息气泡区域 -->
@@ -21,6 +27,9 @@
                 </div>
             </div>
         </div>
+        <button id="confirmBtn" class="talkwithai-confirm-btn">
+            <img src="../assets/confirm_button.svg" alt="Confirm"/>
+        </button>
         <div class="talkwithai-inputbar">
             <input type="text" id="aiInput" placeholder="Type your message..." autocomplete="off" />
             <button id="aiSendBtn" class="talkwithai-send-btn">
@@ -28,25 +37,7 @@
             </button>
         </div>
     </div>
-    <script>
-        // 返回按钮逻辑
-        document.getElementById('talkwithaiBackBtn').onclick = () => {
-            window.api.openChatbox();
-        };
-        // 发送按钮逻辑（可根据实际需求完善）
-        document.getElementById('aiSendBtn').onclick = () => {
-            const input = document.getElementById('aiInput');
-            if (input.value.trim()) {
-                // 这里只做前端演示，实际可调用AI接口
-                const msg = document.createElement('div');
-                msg.className = 'user-bubble';
-                msg.innerHTML = `<div class="user-bubble-content">${input.value}</div>
-                    <img class="user-avatar" src="../assets/user_avatar.svg" alt="User" />`;
-                document.getElementById('aiMessages').appendChild(msg);
-                input.value = '';
-                document.getElementById('aiMessages').scrollTop = document.getElementById('aiMessages').scrollHeight;
-            }
-        };
-    </script>
+        <script src="./talkwithai.js"></script>
+        <script src="./windowUtils.js"></script>
 </body>
 </html>

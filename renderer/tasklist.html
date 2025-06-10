@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task List</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap">
+</head>
+<body>
+    <div class="tasklist-window">
+        <div class="window-header">
+            <div class="window-controls">
+                <div class="window-control close-button" id="chatCloseButton"></div>
+                <div class="window-control minimize-button" id="chatMinimizeButton"></div>
+                <div class="window-control zoom-button"></div>
+            </div>
+            <div class="chatbox_icon">
+                <img src="../assets/chatbox_icon.svg" alt="chatbox_icon" />
+            </div>
+        </div>
+        <div class="tasklist-card">
+            <div class="tasklist-card-header">
+                <img class="chevron" src="../assets/chevron.svg" alt="Expand" />
+                <div class="task-title">
+                    <span>Python<br>calendar app</span>
+                </div>
+                <div class="task-time">
+                    <div>
+                        <span>6 hours</span><br>
+                        <span>30 mins left</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tasklist-items">
+                <div class="tasklist-item">
+                    <img src="../assets/task_todo.svg" class="task-icon" alt="To do" />
+                    <span class="task-desc">Begin coding basic functions</span>
+                    <span class="task-item-time">
+                        1hr 45 mins
+                    </span>
+                </div>
+                <div class="tasklist-item">
+                    <img src="../assets/task_todo.svg" class="task-icon" alt="To do" />
+                    <span class="task-desc">Review assignment instructions</span>
+                    <span class="task-item-time">
+                        15 mins
+                    </span>
+                </div>
+                <div class="tasklist-item">
+                    <img src="../assets/task_done.svg" class="task-icon" alt="Done" />
+                    <span class="task-desc">Outline features (add/delete events)</span>
+                    <span class="task-item-time">
+                        30 mins
+                    </span>
+                </div>
+            </div>
+            <div class="tasklist-progress">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fg" style="width:33%;"></div>
+                </div>
+                <div class="progress-label">33% Done</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

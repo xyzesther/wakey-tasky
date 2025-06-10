@@ -157,8 +157,14 @@ const api = {
     openTalkWithAI: () => {
         console.log('preload openTalkWithAI');
         return ipcRenderer.invoke('open-talkwithai');
+    },
+
+    // Open Task List Window
+    openTaskListWindow: () => {
+        console.log('preload openTaskListWindow');
+        return ipcRenderer.invoke('open-tasklist-window');
     }
-}
+};
 
 // Expose the API
 contextBridge.exposeInMainWorld('api', api);
