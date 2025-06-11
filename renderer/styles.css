@@ -1,11 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
+
+.manrope {
+  font-family: "Manrope", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: transparent;
-    display: flex;
-    justify-content: center;
-    color: #333;
+  font-family: "Manrope", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
 
 /* App States */
@@ -418,19 +424,6 @@ body {
     flex-shrink: 0;
 }
 
-.talkwithai-back-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    margin-right: 10px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-}
-.talkwithai-back-btn img {
-    width: 22px;
-    height: 22px;
-}
 
 .talkwithai-title {
     font-size: 18px;
@@ -477,7 +470,7 @@ body {
     color: #151513;
     border-radius: 14px 14px 14px 4px;
     padding: 10px 16px;
-    font-size: 15px;
+    font-size: 12px;
     max-width: 210px;
     word-break: break-word;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -488,7 +481,7 @@ body {
     color: #FEFEFC;
     border-radius: 14px 14px 4px 14px;
     padding: 10px 16px;
-    font-size: 15px;
+    font-size: 12px;
     max-width: 210px;
     word-break: break-word;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -532,6 +525,25 @@ body {
 }
 .talkwithai-send-btn:hover {
     background: #232321;
+}
+
+.talkwithai-confirm-btn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    padding: 0;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.talkwithai-confirm-btn img {
+    width: 80px;   /* 可根据需要调整图标大小 */
+    height: 80px;
+    display: block;
 }
 
 /* Start Chatbox styles */
@@ -642,6 +654,37 @@ body {
 /* Task List Window */
 
 /* Task Card */
+
+.window-header {
+    position: relative;
+}
+.window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px 0 18px;
+}
+
+.tasklist-window {
+    position: relative;
+}
+
+.chatbox_icon-outer {
+    position: absolute;
+    top: -20px;   /* 距离卡片顶部的距离，可微调 */
+    right: 36px; /* 距离卡片右侧的距离，可微调 */
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    background: none;
+    /* 可选：加阴影或背景让图标更突出 */
+}
+
+.chatbox_icon-outer img {
+    width: 60px;
+    height: 60px;
+}
+
 .tasklist-card {
     margin: 24px;
     border-radius: 18px;
@@ -666,7 +709,7 @@ body {
     margin-top: 6px;
 }
 .task-title {
-    font-size: 2rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #151513;
     flex: 1;
@@ -697,7 +740,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 1.08rem;
+    font-size: 0.75rem;
     color: #151513;
 }
 .task-icon {
@@ -738,6 +781,3 @@ body {
     color: #151513;
     margin-top: 2px;
 }
-
-/* Media query to load Manrope font for the chat interface */
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
