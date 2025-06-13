@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Talk with AI - WakeyTasky</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./style/styles.css">
 </head>
 <body>
     <div class="window-controls">
@@ -16,7 +16,7 @@
         <div class="talkwithai-messages" id="aiMessages">
             <!-- 聊天消息气泡区域 -->
             <div class="ai-bubble">
-                <img class="ai-avatar" src="../assets/talking_icon.svg" alt="AI" />
+                <img class="ai-avatar" src="./assets/talking_icon.svg" alt="AI" />
                 <div class="ai-bubble-content">
                     Hi! How can I help you with your tasks today?
                 </div>
@@ -28,16 +28,16 @@
             </div>
         </div>
         <button id="confirmBtn" class="talkwithai-confirm-btn">
-            <img src="../assets/confirm_button.svg" alt="Confirm"/>
+            <img src="./assets/confirm_button.svg" alt="Confirm"/>
         </button>
         <div class="talkwithai-inputbar">
             <input type="text" id="aiInput" placeholder="Type your message..." autocomplete="off" />
             <button id="aiSendBtn" class="talkwithai-send-btn">
-                <img src="../assets/download_icon.svg" alt="Send" />
+                <img src="./assets/download_icon.svg" alt="Send" />
             </button>
         </div>
     </div>
-        <script src="./talkwithai.js"></script>
-        <script src="./windowUtils.js"></script>
+        <script src="../src/renderer/talkwithai.js"></script>
+        <script src="../src/renderer/windowUtils.js"></script>
 </body>
 </html>

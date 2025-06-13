@@ -6,7 +6,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Import our Express server
-const server = require('./server');
+const server = require('../server');
 
 // ----------------------------------------------------------------------------
 // Application window creation and management
@@ -39,7 +39,7 @@ function createMainWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, '../preload/preload.js') // Use preload script for secure context
         }
     });
 
@@ -54,7 +54,7 @@ function createMainWindow() {
     mainWindow.setMovable(true);
     
     // Load the HTML file
-    mainWindow.loadFile(path.join(__dirname, './renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../../public/index.html'));
 }
 
 
@@ -81,7 +81,7 @@ function createChatboxWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, '../preload/preload.js')
         }
     });
     
@@ -89,8 +89,8 @@ function createChatboxWindow() {
     chatboxWindow.setMenuBarVisibility(false);
     
     // Load the chatbox HTML file
-    chatboxWindow.loadFile(path.join(__dirname, './renderer/chatbox.html'));
-    
+    chatboxWindow.loadFile(path.join(__dirname, '../../public/chatbox.html'));
+
     // Center the window on screen
     chatboxWindow.center();
     
@@ -232,7 +232,7 @@ ipcMain.on('open-task-creation', () => {
 
 // IPC handler to open the Talk with AI view
 ipcMain.handle('open-talkwithai', () => {
-    const filePath = path.join(__dirname, './renderer/talkwithai.html');
+    const filePath = path.join(__dirname, '../../public/talkwithai.html');
     console.log('main open-talkwithai, loading:', filePath);
     if (chatboxWindow) {
         chatboxWindow.loadFile(filePath);
@@ -253,12 +253,12 @@ ipcMain.handle('open-tasklist-window', () => {
         resizable: true,
         frame: false,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, '../preload/preload.js'),
             contextIsolation: true,
             nodeIntegration: false
         }
     });
-    taskListWindow.loadFile(path.join(__dirname, './renderer/tasklist.html'));
+    taskListWindow.loadFile(path.join(__dirname, '../../public/tasklist.html'));
     taskListWindow.on('ready-to-show', () => {
         console.log('taskListWindow ready to show');
     });

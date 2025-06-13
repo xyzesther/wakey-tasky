@@ -3,7 +3,7 @@
 	"productName": "WakeyTasky",
 	"version": "1.0.0",
 	"description": "task manager for ADHD",
-	"main": "main.js",
+	"main": "src/main/main.js",
 	"prisma": {
 		"seed": "node prisma/seed.js"
 	},
