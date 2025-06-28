@@ -48,7 +48,7 @@ router.post("/", async (req, res) => {
 						title: t.title,
 						description: t.description || "",
 						userId,
-						status: "PENDING",
+						status: { connect: { id: "PENDING" } },
 					},
 					include: {
 						subtasks: true,
