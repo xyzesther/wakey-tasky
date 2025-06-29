@@ -12,7 +12,7 @@ const errorOkButton = document.getElementById('errorOkButton');
 const chatCloseButton = document.getElementById('chatCloseButton');
 const chatMinimizeButton = document.getElementById('chatMinimizeButton');
 const folderIcon = document.getElementById('folderIcon');
-const downloadIcon = document.getElementById('downloadIcon');
+const sendIcon = document.getElementById('sendIcon');
 
 // Variables to track state
 let isDragging = false;
@@ -90,8 +90,8 @@ folderIcon.addEventListener('click', () => {
     showTasksInterface();
 });
 
-// Download icon opens task creation view
-downloadIcon.addEventListener('click', () => {
+// Send icon opens task creation view
+sendIcon.addEventListener('click', () => {
     showInputInterface();
 });
 

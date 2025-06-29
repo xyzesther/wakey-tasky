@@ -5,8 +5,8 @@ folderIcon.addEventListener('click', () => {
     window.api.openTaskList();
 });
 
-// Download icon opens task creation view
-downloadIcon.addEventListener('click', () => {
+// send icon opens task creation view
+sendIcon.addEventListener('click', () => {
     console.log('uploadIcon clicked')
     window.api.openTalkWithAI();
 });
