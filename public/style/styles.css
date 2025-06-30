@@ -558,17 +558,6 @@ body {
     overflow: hidden;
 }
 
-.chatbox-container {
-    display: flex;
-    width: 350px;
-    background-color: #FEFEFC;
-    border-radius: 17px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    flex-direction: column;
-    padding: 15px 11px;
-    gap: 10px;
-    position: relative;
-}
 
 .window-controls {
     display: flex;
