@@ -288,5 +288,40 @@ router.patch('/subtasks/:id/status', async (req, res) => {
   }
 });
 
+// 更新子任务状态
+router.patch('/tasks/:taskId/subtasks/:subtaskId', async (req, res) => {
+  const { taskId, subtaskId } = req.params;
+  const { status } = req.body;
+  
+  if (!status || !['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid status value. Must be one of: PENDING, IN_PROGRESS, COMPLETED'
+    });
+  }
+  
+  try {
+    const updatedSubtask = await prisma.subTask.update({
+      where: {
+        id: parseInt(subtaskId)
+      },
+      data: {
+        status
+      }
+    });
+    
+    res.json({
+      success: true,
+      data: updatedSubtask
+    });
+  } catch (error) {
+    console.error('Error updating subtask status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update subtask status'
+    });
+  }
+});
+
 
 module.exports = router;

@@ -12,7 +12,13 @@ document.getElementById('sendIcon').addEventListener('click', () => {
 
 // 新增发送消息功能
 document.getElementById('chatSendBtn').addEventListener('click', () => {
-    sendMessage();
+    const text = document.getElementById('chatInput').value.trim();
+    console.log('Send button clicked, input text:', text);
+    
+    if (text) {
+        console.log('Attempting to send message to backend');
+        sendMessageToBackend(text);
+    }
 });
 
 // 输入框按回车键也可以发送消息

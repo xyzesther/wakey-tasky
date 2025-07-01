@@ -167,29 +167,61 @@ const api = {
 
     // Send message to AI and get response
     sendAIMessage: async (message) => {
+        console.log('sendAIMessage called with message:', message);
         try {
-            const response = await fetch('http://localhost:3000/api/ai/chat', {
+            const response = await fetch('http://localhost:3000/api/generate', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ message }),
+                body: JSON.stringify({ 
+                    prompt: message,
+                    userId: '1'
+                }),
+            });
+            
+            console.log('AI API response status:', response.status);
+            const data = await response.json();
+            console.log('AI API response data:', data);
+            return data;
+        } catch (error) {
+            console.error('Error in sendAIMessage:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    updateSubtaskStatus: async (taskId, subtaskId, newStatus) => {
+        try {
+            const response = await fetch(`${API_URL}/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus }),
             });
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                return { 
+                    success: false, 
+                    error: `Server error (${response.status})` 
+                };
             }
             
-            const data = await response.json();
-            return data;
+            return await response.json();
         } catch (error) {
-            console.error('Error sending message to AI:', error);
-            return { success: false, error: error.message };
+            console.error('Error updating subtask status:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
         }
     },
 };
 
 // Expose the API
 contextBridge.exposeInMainWorld('api', api);
+
+// 添加日志以确认方法存在
+console.log('API methods available:', Object.keys(window.api).join(', '));
 
 console.log('Preload script completed. API exposed:', Object.keys(api));
