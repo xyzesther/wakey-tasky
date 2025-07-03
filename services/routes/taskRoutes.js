@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 router.post('/generate-task', async (req, res) => {
   try {
     console.log('Received request body:', req.body);
-    const { text, startTime, endTime } = req.body;
+    const { text, startTime, endTime, userId } = req.body;
 
     if (!text) {
       return res.status(400).json({
@@ -45,31 +45,36 @@ router.post('/generate-task', async (req, res) => {
     }
 
     // Create main task and subtasks
-    const task = await prisma.mainTask.create({
-      data: {
-        title: `Task: ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`,
-        description: text,
-        status: 'PENDING',
-        subtasks: {
-          create: [
-            {
-              title: 'Prepare for task',
-              status: 'PENDING',
-              startAt: scheduledDateTime,
-              endAt: new Date(scheduledDateTime.getTime() + 30 * 60000)
-            },
-            {
-              title: 'Complete task',
-              status: 'PENDING',
-              startAt: new Date(scheduledDateTime.getTime() + 30 * 60000),
-              endAt: endDateTime || new Date(scheduledDateTime.getTime() + 90 * 60000)
-            }
-          ]
-        }
-      },
-      include: {
-        subtasks: true
+    const data = {
+      title: `Task: ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`,
+      description: text,
+      status: 'PENDING',
+      subtasks: {
+        create: [
+          {
+            title: 'Prepare for task',
+            status: 'PENDING',
+            startAt: scheduledDateTime,
+            endAt: new Date(scheduledDateTime.getTime() + 30 * 60000)
+          },
+          {
+            title: 'Complete task',
+            status: 'PENDING',
+            startAt: new Date(scheduledDateTime.getTime() + 30 * 60000),
+            endAt: endDateTime || new Date(scheduledDateTime.getTime() + 90 * 60000)
+          }
+        ]
       }
+    };
+
+    // if userId is provided, add user to the task
+    if (userId) {
+      data.user = { connect: { id: userId } };
+    }
+
+    const task = await prisma.mainTask.create({
+      data,
+      include: { subtasks: true }
     });
 
     res.status(201).json({
