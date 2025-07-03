@@ -20,8 +20,8 @@ model User {
 
 model MainTask {
   id          String      @id @default(uuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
   title       String
   description String?
   subtasks    Subtask[]
