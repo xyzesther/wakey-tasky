@@ -49,6 +49,13 @@ router.post("/", async (req, res) => {
 						description: t.description || "",
 						userId,
 						status: "PENDING",
+						subtasks: {
+							create: t.subtasks?.map(sub => ({
+								title: sub.title,
+								description: sub.description || "",
+								status: "PENDING",
+							})) || [],
+						},
 					},
 					include: {
 						subtasks: true,
