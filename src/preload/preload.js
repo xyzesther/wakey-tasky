@@ -176,7 +176,6 @@ const api = {
                 },
                 body: JSON.stringify({ 
                     prompt: message,
-                    userId: '1'
                 }),
             });
             
