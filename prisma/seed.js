@@ -2,29 +2,42 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
-	console.log("Seeding default statuses...");
+	// 创建一个测试用户
+	const user = await prisma.user.create({
+		data: {}, // 只需要 id 字段，自动生成
+	});
+	console.log("Seeded user:", user.id);
 
-	const statuses = [
-		{ id: "PENDING", name: "Pending" },
-		{ id: "IN_PROGRESS", name: "In Progress" },
-		{ id: "COMPLETED", name: "Completed" },
-		{ id: "CANCELLED", name: "Cancelled" },
-	];
-
-	for (const status of statuses) {
-		try {
-			await prisma.status.upsert({
-				where: { id: status.id },
-				update: {},
-				create: status,
-			});
-			console.log(`Seeded status: ${status.id}`);
-		} catch (error) {
-			console.error(`Failed to seed status: ${status.id}`, error);
-		}
-	}
-
-	console.log("Seeding completed.");
+	// 创建一个主任务，并为该用户关联
+	const mainTask = await prisma.mainTask.create({
+		data: {
+			title: "测试主任务",
+			description: "这是一个用于测试的主任务。",
+			status: "PENDING",
+			user: {
+				connect: { id: user.id },
+			},
+			subtasks: {
+				create: [
+					{
+						title: "子任务一",
+						description: "第一个子任务。",
+						status: "PENDING",
+					},
+					{
+						title: "子任务二",
+						description: "第二个子任务。",
+						status: "PENDING",
+					},
+				],
+			},
+		},
+		include: { subtasks: true },
+	});
+	console.log("Seeded main task:", mainTask.id);
+	mainTask.subtasks.forEach((subtask) => {
+		console.log("  Seeded subtask:", subtask.id);
+	});
 }
 
 main()
