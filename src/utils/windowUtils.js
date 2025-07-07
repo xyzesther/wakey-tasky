@@ -1,17 +1,23 @@
 // Get DOM elements
 const chatCloseButton = document.getElementById('chatCloseButton');
 const chatMinimizeButton = document.getElementById('chatMinimizeButton');
-const chatboxContainer = document.querySelector('.chatbox-container');
+const chatBoxContainer = document.querySelector('.chatbox-container') || 
+                  document.querySelector('.talkwithai-container') ||
+                  document.querySelector('.tasklist-container');
 
 // Add drag functionality
-let isDragging = true;
+let isDragging = false;  // 修改为 false
 let startX, startY;
 
 // Make the entire chatbox draggable
 chatboxContainer.addEventListener('mousedown', (e) => {
     // Skip if clicking on icons or window controls
     if (e.target.classList.contains('prompt-icon') || 
-        e.target.classList.contains('window-control')) return;
+        e.target.classList.contains('window-control') ||
+        e.target.id === 'chatInput' ||  // 添加排除输入框
+        e.target.id === 'chatSendBtn') {
+        return;
+    }
     
     isDragging = true;
     startX = e.clientX;

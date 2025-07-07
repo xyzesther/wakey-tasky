@@ -6,24 +6,19 @@
     <link rel="stylesheet" href="./style/styles.css">
 </head>
 <body>
-    <div class="window-controls">
-        <div class="window-control close-button" id="chatCloseButton"></div>
-        <div class="window-control minimize-button" id="chatMinimizeButton"></div>
-        <div class="window-control zoom-button"></div>
-    </div>
-    
     <div class="talkwithai-container">
+        <!-- 将窗口控制按钮移到容器内部 -->
+        <div class="window-controls">
+            <div class="window-control close-button" id="chatCloseButton"></div>
+            <div class="window-control minimize-button" id="chatMinimizeButton"></div>
+        </div>
+        
         <div class="talkwithai-messages" id="aiMessages">
             <!-- 聊天消息气泡区域 -->
             <div class="ai-bubble">
                 <img class="ai-avatar" src="./assets/talking_icon.svg" alt="AI" />
                 <div class="ai-bubble-content">
                     Hi! How can I help you with your tasks today?
-                </div>
-            </div>
-            <div class="user-bubble">
-                <div class="user-bubble-content">
-                    Help me plan my day.
                 </div>
             </div>
         </div>
@@ -34,7 +29,7 @@
             </button>
         </div>
     </div>
-        <script src="../src/renderer/talkwithai.js"></script>
-        <script src="../src/renderer/windowUtils.js"></script>
+    <script src="../src/renderer/talkwithai.js"></script>
+    <script src="../src/utils/windowUtils.js"></script>
 </body>
 </html>

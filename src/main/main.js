@@ -174,11 +174,8 @@ ipcMain.handle('open-chatbox', (event) => {
 ipcMain.on('close-window', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-        // If it's the chatbox being closed, show the main window
-        if (win === chatboxWindow) {
-            if (mainWindow) {
-                mainWindow.show();
-            }
+        if (mainWindow) {
+            mainWindow.show();
         }
         
         win.close();

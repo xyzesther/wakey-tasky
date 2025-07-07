@@ -133,7 +133,7 @@ const api = {
         return ipcRenderer.invoke('open-chatbox');
     },
     
-    // Close current window (for chatbox)
+    // Close current window
     closeWindow: () => {
         ipcRenderer.send('close-window');
     },

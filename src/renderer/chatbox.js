@@ -76,11 +76,10 @@ async function sendMessageToBackend(message) {
 
 // 在 DOMContentLoaded 事件中添加
 document.addEventListener('DOMContentLoaded', () => {
-    // 已有的代码...
     
     // 调整窗口大小以适应内容
     if (window.api && window.api.resizeWindow) {
         // 给定固定宽高
-        window.api.resizeWindow(400, 500);
+        window.api.resizeWindow(500, 500);
     }
 });
