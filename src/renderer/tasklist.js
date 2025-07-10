@@ -98,24 +98,11 @@ function renderTaskList(tasks) {
     // 按开始时间排序任务
     tasks.sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
     
-    // 计算总任务和已完成任务
-    const totalTasks = tasks.reduce((count, task) => count + (task.subtasks?.length || 0), 0);
-    const completedTasks = tasks.reduce((count, task) => {
-        return count + (task.subtasks?.filter(subtask => subtask.status === 'COMPLETED').length || 0);
-    }, 0);
-    
-    // 计算进度百分比
-    const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    
     // 为每个任务创建卡片
     tasks.forEach(task => {
         const taskCard = createTaskCard(task);
         tasklistContainer.appendChild(taskCard);
     });
-    
-    // 添加进度条
-    const progressSection = createProgressBar(progressPercentage);
-    tasklistContainer.appendChild(progressSection);
 }
 
 // 创建任务卡片
@@ -164,9 +151,20 @@ function createTaskCard(task) {
     const taskItems = document.createElement('div');
     taskItems.className = 'tasklist-items';
     
+    // 计算此任务的子任务完成进度
+    let completedSubtasks = 0;
+    let totalSubtasks = 0;
+    
     // 遍历并添加子任务
     if (task.subtasks && task.subtasks.length > 0) {
+        totalSubtasks = task.subtasks.length;
+        
         task.subtasks.forEach(subtask => {
+            // 计算完成的子任务数量
+            if (subtask.status === 'COMPLETED') {
+                completedSubtasks++;
+            }
+            
             const taskItem = document.createElement('div');
             taskItem.className = 'tasklist-item';
             taskItem.dataset.subtaskId = subtask.id;
@@ -202,24 +200,25 @@ function createTaskCard(task) {
         taskItems.appendChild(noSubtasks);
     }
     
-    // 组装完整卡片
+    // 创建该任务卡片的进度条
+    const taskProgressPercentage = totalSubtasks > 0 ? 
+        Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
+    
+    const taskProgressBar = document.createElement('div');
+    taskProgressBar.className = 'task-progress';
+    taskProgressBar.innerHTML = `
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fg" style="width:${taskProgressPercentage}%;"></div>
+        </div>
+        <div class="progress-label">${taskProgressPercentage}% Complete</div>
+    `;
+    
+    // 组装完整卡片：头部 + 子任务列表 + 进度条
     card.appendChild(header);
     card.appendChild(taskItems);
+    card.appendChild(taskProgressBar); // 添加进度条到任务卡片
     
     return card;
-}
-
-// 创建进度条
-function createProgressBar(percentage) {
-    const progressSection = document.createElement('div');
-    progressSection.className = 'tasklist-progress';
-    progressSection.innerHTML = `
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fg" style="width:${percentage}%;"></div>
-        </div>
-        <div class="progress-label">${percentage}% Done</div>
-    `;
-    return progressSection;
 }
 
 // 切换子任务状态
