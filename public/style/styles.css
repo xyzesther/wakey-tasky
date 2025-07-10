@@ -313,15 +313,15 @@ body {
 
 /* Add these styles for the chatbox interface */
 .chatbox-container {
-    display: flex;
+    position: relative;
     width: 350px;
-    background-color: #FEFEFC;
-    border-radius: 17px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
+    height: 280px;
+    display: flex;
     flex-direction: column;
-    padding: 15px 11px;
-    gap: 13px;
+    overflow: hidden; /* 防止整体滚动 */
+    background-color: #f5f5f7;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .window-controls {
@@ -365,6 +365,7 @@ body {
     align-items: center;
     justify-content: center;
     margin: 10px 0;
+    flex-shrink: 0; /* 防止压缩 */
 }
 
 .app-icon .clock-icon {
@@ -380,8 +381,9 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 327px;
+    width: calc(100% - 35px); /* Account for padding */
     box-sizing: border-box;
+    margin: 0 auto 5px auto;
 }
 
 .prompt-text {
@@ -394,17 +396,17 @@ body {
 .prompt-icons {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .prompt-icon {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     cursor: pointer;
     object-fit: contain;
 }
 
-/* New styles for Talk with AI feature */
+New styles for Talk with AI feature
 .talkwithai-container {
     width: 350px;
     height: 480px;
@@ -443,6 +445,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    max-height: calc(100% - 120px); /* 减去其他元素的高度 */
 }
 
 .ai-bubble, .user-bubble {
@@ -499,6 +502,7 @@ body {
     background: #FEFEFC;
     border-top: 1px solid #F0F0ED;
     flex-shrink: 0;
+    margin-top: auto; /* 推到底部 */
 }
 
 .talkwithai-inputbar input {
@@ -603,6 +607,7 @@ body {
     align-items: center;
     justify-content: center;
     margin: 25px 0 12px 0; /* Increased top margin to create space for controls */
+    flex-shrink: 0; /* 防止压缩 */
 }
 
 .app-icon .clock-icon {

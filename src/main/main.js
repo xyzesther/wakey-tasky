@@ -15,6 +15,11 @@ const server = require('../server');
 // Store references to windows
 let mainWindow;
 let chatboxWindow;
+let taskListWindow;
+
+// Position information for chatbox and task list windows
+let chatboxPosition = { x: 0, y: 0 };
+let taskListPosition = { x: 0, y: 0 };
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
@@ -61,50 +66,70 @@ function createMainWindow() {
 
 // Function to create the chatbox window
 function createChatboxWindow() {
-    // If chatbox window already exists, just focus it and return
-    if (chatboxWindow) {
-        chatboxWindow.focus();
-        return;
-    }
-    
     chatboxWindow = new BrowserWindow({
-        title: 'WakeyTasky Chat',
-        width: 370, // Slightly wider to ensure full content display
-        height: 180, // Increased height to accommodate the layout
+        width: 400,
+        height: 500,
         frame: false,
-        transparent: false,
-        resizable: true,
-        alwaysOnTop: false, // Don't keep on top
-        skipTaskbar: false, // Show in taskbar
-        movable: true,
-        show: true,
+        transparent: true,
         webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
             preload: path.join(__dirname, '../preload/preload.js')
         }
     });
     
-    // Hide the menu bar
-    chatboxWindow.setMenuBarVisibility(false);
-    
-    // Load the chatbox HTML file
     chatboxWindow.loadFile(path.join(__dirname, '../../public/chatbox.html'));
-
-    // Center the window on screen
-    chatboxWindow.center();
     
-    // Handle window close
+    // 存储 chatbox 窗口位置，用于任务列表窗口定位
+    chatboxPosition = chatboxWindow.getPosition();
+    
     chatboxWindow.on('closed', () => {
         chatboxWindow = null;
-        
-        // Show the main window again when the chatbox is closed
-        if (mainWindow) {
-            mainWindow.show();
+    });
+    
+    // 当 chatbox 窗口移动时，更新位置信息
+    chatboxWindow.on('move', () => {
+        if (chatboxWindow) {
+            chatboxPosition = chatboxWindow.getPosition();
+            
+            // 如果任务列表窗口已打开，同步移动它
+            if (taskListWindow) {
+                positionTaskListWindow();
+            }
         }
     });
 }
 
+// 创建任务列表窗口的函数
+function createTaskListWindow() {
+    taskListWindow = new BrowserWindow({
+        width: 400,
+        height: 600,
+        frame: false,
+        transparent: true,
+        webPreferences: {
+            preload: path.join(__dirname, '../preload/preload.js')
+        }
+    });
+    
+    taskListWindow.loadFile(path.join(__dirname, '../../public/tasklist.html'));
+    
+    // 定位任务列表窗口
+    positionTaskListWindow();
+    
+    taskListWindow.on('closed', () => {
+        taskListWindow = null;
+    });
+}
+
+// 定位任务列表窗口在 chatbox 下方
+function positionTaskListWindow() {
+    if (!taskListWindow || !chatboxWindow) return;
+    
+    const [x, y] = chatboxWindow.getPosition();
+    const [width, height] = chatboxWindow.getSize();
+    
+    // 将任务列表窗口放在 chatbox 下方，保持 x 坐标一致
+    taskListWindow.setPosition(x, y + height + 10);
+}
 
 // ----------------------------------------------------------------------------
 // IPC Handlers
@@ -227,38 +252,31 @@ ipcMain.on('open-task-creation', () => {
     }
 });
 
-// IPC handler to open the Talk with AI view
-ipcMain.handle('open-talkwithai', () => {
-    const filePath = path.join(__dirname, '../../public/talkwithai.html');
-    console.log('main open-talkwithai, loading:', filePath);
-    if (chatboxWindow) {
-        chatboxWindow.loadFile(filePath);
-        chatboxWindow.setSize(350, 480); // Set size for Talk with AI view
-    }
-});
+// // IPC handler to open the Talk with AI view
+// ipcMain.handle('open-talkwithai', () => {
+//     const filePath = path.join(__dirname, '../../public/talkwithai.html');
+//     console.log('main open-talkwithai, loading:', filePath);
+//     if (chatboxWindow) {
+//         chatboxWindow.loadFile(filePath);
+//         chatboxWindow.setSize(350, 480); // Set size for Talk with AI view
+//     }
+// });
 
 // IPC handler to open the Task List window
 ipcMain.handle('open-tasklist-window', () => {
     console.log('main: open-tasklist-window received');
-    // 创建新窗口并加载 tasklist.html
-    const { width, height, x, y } = chatboxWindow.getBounds();
-    const taskListWindow = new BrowserWindow({
-        width: 350,
-        height: 480,
-        x: x + width + 10, // 右侧偏移10像素
-        y: y,
-        resizable: true,
-        frame: false,
-        webPreferences: {
-            preload: path.join(__dirname, '../preload/preload.js'),
-            contextIsolation: true,
-            nodeIntegration: false
-        }
-    });
-    taskListWindow.loadFile(path.join(__dirname, '../../public/tasklist.html'));
-    taskListWindow.on('ready-to-show', () => {
-        console.log('taskListWindow ready to show');
-    });
+    if (taskListWindow) {
+        taskListWindow.show();
+    } else {
+        createTaskListWindow();
+    }
+    
+    // 确保 chatbox 窗口保持在前
+    if (chatboxWindow) {
+        chatboxWindow.focus();
+    }
+    
+    return true;
 });
 
 // ----------------------------------------------------------------------------

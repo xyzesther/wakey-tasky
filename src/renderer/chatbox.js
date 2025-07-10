@@ -29,33 +29,77 @@ document.getElementById('chatInput').addEventListener('keypress', (e) => {
 });
 
 // 发送消息的函数
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('chatInput');
     const text = input.value.trim();
     
     if (text) {
-        // 记录用户输入的消息（后面传递给 talkwithai 页面）
-        localStorage.setItem('userMessage', text);
-        
         // 显示用户消息气泡
-        const msg = document.createElement('div');
-        msg.className = 'user-bubble';
-        msg.innerHTML = `<div class="user-bubble-content">${text}</div>`;
-        document.getElementById('aiMessages').appendChild(msg);
+        const userMsg = document.createElement('div');
+        userMsg.className = 'user-bubble';
+        userMsg.innerHTML = `<div class="user-bubble-content">${text}</div>`;
+        document.getElementById('aiMessages').appendChild(userMsg);
+        
+        // 添加一个"正在思考"的 AI 气泡
+        const thinkingMsg = document.createElement('div');
+        thinkingMsg.className = 'ai-bubble';
+        thinkingMsg.innerHTML = `
+            <img class="ai-avatar" src="./assets/talking_icon.svg" alt="AI" />
+            <div class="ai-bubble-content thinking">
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        `;
+        document.getElementById('aiMessages').appendChild(thinkingMsg);
+        
+        // 滚动到底部
+        const messagesContainer = document.getElementById('aiMessages');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
         
         // 清空输入框
         input.value = '';
         
-        // 将消息发送到后端（可选）
-        sendMessageToBackend(text);
-        
-        // 跳转到 talkwithai 页面
-        setTimeout(() => {
-            window.api.openTalkWithAI();
+        try {
+            // 直接在 chatbox 中调用 AI 服务
+            const response = await window.api.sendAIMessage(text);
             
-            // 同时打开任务列表窗口
+            // 移除"正在思考"的气泡
+            messagesContainer.removeChild(thinkingMsg);
+            
+            // 添加 AI 响应气泡
+            const aiResponseMsg = document.createElement('div');
+            aiResponseMsg.className = 'ai-bubble';
+            aiResponseMsg.innerHTML = `
+                <img class="ai-avatar" src="./assets/talking_icon.svg" alt="AI" />
+                <div class="ai-bubble-content">
+                    任务已创建成功！请查看任务列表。
+                </div>
+            `;
+            document.getElementById('aiMessages').appendChild(aiResponseMsg);
+            
+            // 滚动到底部
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // 打开任务列表窗口（调整位置显示在 chatbox 下方）
             window.api.openTaskListWindow();
-        }, 500); // 稍微延迟，让用户看到自己的消息
+        } catch (error) {
+            console.error('Error processing message:', error);
+            
+            // 移除"正在思考"的气泡
+            messagesContainer.removeChild(thinkingMsg);
+            
+            // 显示错误消息
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'ai-bubble';
+            errorMsg.innerHTML = `
+                <img class="ai-avatar" src="./assets/talking_icon.svg" alt="AI" />
+                <div class="ai-bubble-content error">
+                    抱歉，处理您的请求时出现了问题。请稍后重试。
+                </div>
+            `;
+            document.getElementById('aiMessages').appendChild(errorMsg);
+        }
     }
 }
 
@@ -76,10 +120,12 @@ async function sendMessageToBackend(message) {
 
 // 在 DOMContentLoaded 事件中添加
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 调整窗口大小以适应内容
+    // 调整窗口大小为固定尺寸 (一次性设置)
     if (window.api && window.api.resizeWindow) {
-        // 给定固定宽高
-        window.api.resizeWindow(500, 500);
+        // 设置固定的宽高
+        window.api.resizeWindow(350, 500);
     }
+    
+    // 聚焦输入框
+    document.getElementById('chatInput').focus();
 });
