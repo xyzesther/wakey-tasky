@@ -173,15 +173,20 @@ function createTaskCard(task) {
             const iconSrc = subtask.status === 'COMPLETED' ? 
                 './assets/task_done.svg' : './assets/task_todo.svg';
             
-            // 计算子任务时长
-            const duration = subtask.duration || 30; // 默认30分钟
-            const durationText = duration >= 60 ? 
-                `${Math.floor(duration/60)}hr ${duration%60} mins` : 
-                `${duration} mins`;
+            // 计算子任务时长（分钟）
+            const duration = calculateSubtaskDuration(subtask);
+            const durationText = formatDuration(duration);
             
+            // 确定番茄钟图标
+            const tomatoIcons = generateTomatoIcons(duration);
+            
+            // 构建子任务HTML
             taskItem.innerHTML = `
                 <img src="${iconSrc}" class="task-icon" alt="${subtask.status === 'COMPLETED' ? 'Done' : 'To do'}" />
                 <span class="task-desc">${subtask.title}</span>
+                <div class="tomato-icons">
+                    ${tomatoIcons}
+                </div>
                 <span class="task-item-time">${durationText}</span>
             `;
             
@@ -253,6 +258,65 @@ function createTaskCard(task) {
     });
     
     return card;
+}
+
+// 计算子任务持续时间（分钟）
+function calculateSubtaskDuration(subtask) {
+    
+    // 计算开始和结束时间之间的差值
+    if (subtask.startAt && subtask.endAt) {
+        const start = new Date(subtask.startAt);
+        const end = new Date(subtask.endAt);
+        const diffMs = end - start;
+        return Math.round(diffMs / (1000 * 60)); // 转换为分钟
+    }
+    
+    // 默认返回30分钟
+    return 30;
+}
+
+// 格式化持续时间显示
+function formatDuration(minutes) {
+    if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours}hr ${mins > 0 ? mins + 'min' : ''}`;
+    }
+    return `${minutes}min`;
+}
+
+// 根据时长生成番茄时钟图标
+function generateTomatoIcons(durationMinutes) {
+    // 确保时间不超过2小时（120分钟）
+    const cappedDuration = Math.min(durationMinutes, 120);
+    
+    let icons = '';
+    
+    // 生成番茄图标
+    // 15分钟 = 15min.svg
+    // 30分钟 = 30min.svg
+    // 45分钟 = 45min.svg
+    // 60分钟 = 60min.svg
+    
+    if (cappedDuration <= 15) {
+        icons = '<img src="./assets/tomato_clock/15mins.svg" alt="15min" class="tomato-icon" />';
+    } else if (cappedDuration <= 30) {
+        icons = '<img src="./assets/tomato_clock/30mins.svg" alt="30min" class="tomato-icon" />';
+    } else if (cappedDuration <= 45) {
+        icons = '<img src="./assets/tomato_clock/45mins.svg" alt="45min" class="tomato-icon" />';
+    } else if (cappedDuration <= 60) {
+        icons = '<img src="./assets/tomato_clock/60mins.svg" alt="60min" class="tomato-icon" />';
+    } else if (cappedDuration <= 75) {
+        icons = '<img src="./assets/tomato_clock/60mins.svg" alt="60min" class="tomato-icon" /><img src="./assets/tomato_clock/15mins.svg" alt="15min" class="tomato-icon" />';
+    } else if (cappedDuration <= 90) {
+        icons = '<img src="./assets/tomato_clock/60mins.svg" alt="60min" class="tomato-icon" /><img src="./assets/tomato_clock/30mins.svg" alt="30min" class="tomato-icon" />';
+    } else if (cappedDuration <= 105) {
+        icons = '<img src="./assets/tomato_clock/60mins.svg" alt="60min" class="tomato-icon" /><img src="./assets/tomato_clock/45mins.svg" alt="45min" class="tomato-icon" />';
+    } else {
+        icons = '<img src="./assets/tomato_clock/60mins.svg" alt="60min" class="tomato-icon" /><img src="./assets/tomato_clock/60mins.svg" alt="60min" class="tomato-icon" />';
+    }
+    
+    return icons;
 }
 
 // 切换子任务状态
