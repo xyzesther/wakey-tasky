@@ -216,7 +216,41 @@ function createTaskCard(task) {
     // 组装完整卡片：头部 + 子任务列表 + 进度条
     card.appendChild(header);
     card.appendChild(taskItems);
-    card.appendChild(taskProgressBar); // 添加进度条到任务卡片
+    card.appendChild(taskProgressBar);
+    
+    // 获取 chevron 元素
+    const chevron = header.querySelector('.chevron');
+    
+    // 添加 chevron 点击事件来控制展开/收起
+    chevron.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        
+        // 切换子任务列表和进度条的显示状态
+        if (taskItems.style.display === 'none') {
+            // 展开
+            taskItems.style.display = '';
+            taskProgressBar.style.display = '';
+            
+            // 还原箭头指向（向下）
+            chevron.style.transform = 'rotate(0deg)';
+        } else {
+            // 收起
+            taskItems.style.display = 'none';
+            taskProgressBar.style.display = 'none';
+            
+            // 改变箭头指向（向右）
+            chevron.style.transform = 'rotate(+90deg)';
+        }
+    });
+    
+    // 添加整个标题区域点击事件
+    header.addEventListener('click', (e) => {
+        // 如果点击的是 chevron 图标则不处理（避免重复触发）
+        if (e.target === chevron) return;
+        
+        // 模拟点击 chevron
+        chevron.click();
+    });
     
     return card;
 }
