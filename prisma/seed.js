@@ -23,11 +23,13 @@ async function main() {
 						title: "子任务一",
 						description: "第一个子任务。",
 						status: "PENDING",
+						duration: 30,
 					},
 					{
 						title: "子任务二",
 						description: "第二个子任务。",
 						status: "PENDING",
+						duration: 30,
 					},
 				],
 			},

@@ -34,8 +34,7 @@ model Subtask {
   task        MainTask    @relation(fields: [taskId], references: [id])
   title       String
   description String?
-  startAt     DateTime?
-  endAt       DateTime?
+  duration    Int
   status      TaskStatus  @default(PENDING)
 }
 
