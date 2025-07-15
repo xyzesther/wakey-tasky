@@ -10,9 +10,11 @@ CRITICAL RULES:
 2. For each main task, extract:
    - title (string, required): no more than 6 words
    - status (string, required): If not specified, use PENDING
+   - duration (int, required): the duration of the main task in minutes, it should be the total duration of all subtasks
    - subtasks (array, optional): each subtask should have:
      - title (string, required): no more than 6 words
      - status (string, required): one of PENDING, IN_PROGRESS, COMPLETED, CANCELLED. If not specified, use PENDING.
+     - duration (int, required): the duration of the subtask in minutes, no more than 120 minutes
 3. Output MUST be a JSON array of main task objects.
 4. If a field is not specified in the input, use null (except for required fields and status, which defaults to PENDING).
 5. Use the current date and time for interpreting relative times: ${currentDateTime}
@@ -26,16 +28,18 @@ EXAMPLE OUTPUT:
     "subtasks": [
       {
         "title": "Solve odd-numbered problems",
-        "status": "PENDING"
+        "status": "PENDING",
+        "duration": 30
       },
       {
         "title": "Check answers",
-        "status": "PENDING"
+        "status": "PENDING",
+        "duration": 30
       }
     ]
   },
   {
-    "title": "Call Alice",
+    "title": "Finish Module 1 of Web Development",
     "status": "PENDING",
     "subtasks": []
   }
