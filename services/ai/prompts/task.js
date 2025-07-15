@@ -17,8 +17,7 @@ CRITICAL RULES:
      - duration (int, required): the duration of the subtask in minutes, no more than 120 minutes
 3. Output MUST be a JSON array of main task objects.
 4. If a field is not specified in the input, use null (except for required fields and status, which defaults to PENDING).
-5. Use the current date and time for interpreting relative times: ${currentDateTime}
-6. Output ONLY the JSON array, with no extra text or explanation.
+5. Output ONLY the JSON array, with no extra text or explanation.
 
 EXAMPLE OUTPUT:
 [
