@@ -10,7 +10,7 @@ CRITICAL RULES:
 2. For each main task, extract:
    - title (string, required): no more than 6 words
    - status (string, required): If not specified, use PENDING
-   - duration (int, required): the duration of the main task in minutes, it should be the total duration of all subtasks
+   - duration (int, required): the sum of all its subtasks' durations (in minutes). If there are no subtasks, set duration to 5.
    - subtasks (array, optional): each subtask should have:
      - title (string, required): no more than 6 words
      - status (string, required): one of PENDING, IN_PROGRESS, COMPLETED, CANCELLED. If not specified, use PENDING.
@@ -24,6 +24,7 @@ EXAMPLE OUTPUT:
   {
     "title": "Finish math homework",
     "status": "PENDING",
+    "duration": 60,
     "subtasks": [
       {
         "title": "Solve odd-numbered problems",
@@ -40,6 +41,7 @@ EXAMPLE OUTPUT:
   {
     "title": "Finish Module 1 of Web Development",
     "status": "PENDING",
+    "duration": 5,
     "subtasks": []
   }
 ]
