@@ -95,8 +95,8 @@ function renderTaskList(tasks) {
     tasklistContainer.appendChild(loadingIndicator);
     tasklistContainer.appendChild(noTasksMessage);
     
-    // 按开始时间排序任务
-    tasks.sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+    // 按创建时间排序任务（替代 startAt）
+    tasks.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     
     // 为每个任务创建卡片
     tasks.forEach(task => {
@@ -111,24 +111,31 @@ function createTaskCard(task) {
     card.className = 'tasklist-card';
     card.dataset.taskId = task.id;
     
-    // 计算任务时间（以小时和分钟表示）
-    const startTime = new Date(task.startAt);
-    const endTime = new Date(task.endAt);
-    const durationMs = endTime - startTime;
-    const hours = Math.floor(durationMs / (1000 * 60 * 60));
-    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    // 计算任务总时长（基于子任务的 duration）
+    let totalDurationMinutes = 0;
+    if (task.subtasks && task.subtasks.length > 0) {
+        totalDurationMinutes = task.subtasks.reduce((total, subtask) => {
+            return total + (subtask.duration || 30); // 默认30分钟
+        }, 0);
+    }
     
-    // 计算剩余时间
+    const hours = Math.floor(totalDurationMinutes / 60);
+    const minutes = totalDurationMinutes % 60;
+    
+    // 计算创建时间信息
+    const createdAt = new Date(task.createdAt);
     const now = new Date();
-    let timeLeftText = '';
+    const timeSinceCreated = now - createdAt;
+    const hoursAgo = Math.floor(timeSinceCreated / (1000 * 60 * 60));
+    const minutesAgo = Math.floor((timeSinceCreated % (1000 * 60 * 60)) / (1000 * 60));
     
-    if (now < endTime) {
-        const timeLeftMs = endTime - now;
-        const hoursLeft = Math.floor(timeLeftMs / (1000 * 60 * 60));
-        const minutesLeft = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
-        timeLeftText = `${hoursLeft} ${hoursLeft === 1 ? 'hour' : 'hours'} ${minutesLeft} mins left`;
+    let timeInfo = '';
+    if (hoursAgo > 0) {
+        timeInfo = `Created ${hoursAgo}h ${minutesAgo}m ago`;
+    } else if (minutesAgo > 0) {
+        timeInfo = `Created ${minutesAgo} mins ago`;
     } else {
-        timeLeftText = 'Time expired';
+        timeInfo = 'Just created';
     }
     
     // 创建任务头部
@@ -141,8 +148,8 @@ function createTaskCard(task) {
         </div>
         <div class="task-time">
             <div>
-                <span>${hours} ${hours === 1 ? 'hour' : 'hours'}</span><br>
-                <span>${minutes} mins${timeLeftText ? '<br>' + timeLeftText : ''}</span>
+                <span>${hours}h ${minutes}m total</span><br>
+                <span class="time-info">${timeInfo}</span>
             </div>
         </div>
     `;
@@ -173,8 +180,8 @@ function createTaskCard(task) {
             const iconSrc = subtask.status === 'COMPLETED' ? 
                 './assets/task_done.svg' : './assets/task_todo.svg';
             
-            // 计算子任务时长（分钟）
-            const duration = calculateSubtaskDuration(subtask);
+            // 获取子任务时长
+            const duration = subtask.duration || 30; // 默认30分钟
             const durationText = formatDuration(duration);
             
             // 确定番茄钟图标
@@ -215,7 +222,7 @@ function createTaskCard(task) {
         <div class="progress-bar-bg">
             <div class="progress-bar-fg" style="width:${taskProgressPercentage}%;"></div>
         </div>
-        <div class="progress-label">${taskProgressPercentage}% Complete</div>
+        <div class="progress-label">${taskProgressPercentage}% Complete (${completedSubtasks}/${totalSubtasks} subtasks)</div>
     `;
     
     // 组装完整卡片：头部 + 子任务列表 + 进度条
@@ -260,29 +267,14 @@ function createTaskCard(task) {
     return card;
 }
 
-// 计算子任务持续时间（分钟）
-function calculateSubtaskDuration(subtask) {
-    
-    // 计算开始和结束时间之间的差值
-    if (subtask.startAt && subtask.endAt) {
-        const start = new Date(subtask.startAt);
-        const end = new Date(subtask.endAt);
-        const diffMs = end - start;
-        return Math.round(diffMs / (1000 * 60)); // 转换为分钟
-    }
-    
-    // 默认返回30分钟
-    return 30;
-}
-
 // 格式化持续时间显示
 function formatDuration(minutes) {
     if (minutes >= 60) {
         const hours = Math.floor(minutes / 60);
         const mins = minutes % 60;
-        return `${hours}hr ${mins > 0 ? mins + 'min' : ''}`;
+        return `${hours}h ${mins > 0 ? mins + 'm' : ''}`.trim();
     }
-    return `${minutes}min`;
+    return `${minutes}m`;
 }
 
 // 根据时长生成番茄时钟图标
@@ -293,11 +285,6 @@ function generateTomatoIcons(durationMinutes) {
     let icons = '';
     
     // 生成番茄图标
-    // 15分钟 = 15min.svg
-    // 30分钟 = 30min.svg
-    // 45分钟 = 45min.svg
-    // 60分钟 = 60min.svg
-    
     if (cappedDuration <= 15) {
         icons = '<img src="./assets/tomato_clock/15mins.svg" alt="15min" class="tomato-icon" />';
     } else if (cappedDuration <= 30) {
@@ -325,7 +312,7 @@ async function toggleSubtaskStatus(taskId, subtaskId, currentStatus) {
         // 计算新状态
         const newStatus = currentStatus === 'COMPLETED' ? 'PENDING' : 'COMPLETED';
         
-        // 调用API更新状态（假设preload.js中有updateSubtaskStatus方法）
+        // 调用API更新状态
         if (window.api.updateSubtaskStatus) {
             const response = await window.api.updateSubtaskStatus(taskId, subtaskId, newStatus);
             

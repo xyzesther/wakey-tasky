@@ -33,7 +33,7 @@ model Subtask {
   taskId      String
   task        MainTask    @relation(fields: [taskId], references: [id])
   title       String
-  duration    Int
+  duration    Int?
   status      TaskStatus  @default(PENDING)
 }
 
