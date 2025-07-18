@@ -2,17 +2,17 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
-	// 创建一个测试用户
+	// Create a test user
 	const user = await prisma.user.create({
-		data: {}, // 只需要 id 字段，自动生成
+		data: {}, // only need id field, auto-generated
 	});
 	console.log("Seeded user:", user.id);
 
-	// 创建一个主任务，并为该用户关联
+	// Create a main task, and associate it with the user
 	const mainTask = await prisma.mainTask.create({
 		data: {
-			title: "测试主任务",
-			description: "这是一个用于测试的主任务。",
+			title: "Test Main Task",
+			duration: 75,
 			status: "PENDING",
 			user: {
 				connect: { id: user.id },
@@ -20,14 +20,16 @@ async function main() {
 			subtasks: {
 				create: [
 					{
-						title: "子任务一",
-						description: "第一个子任务。",
+						title: "Subtask One",
+						description: "The first subtask.",
 						status: "PENDING",
+						duration: 30,
 					},
 					{
-						title: "子任务二",
-						description: "第二个子任务。",
+						title: "Subtask Two",
+						description: "The second subtask.",
 						status: "PENDING",
+						duration: 45,
 					},
 				],
 			},
