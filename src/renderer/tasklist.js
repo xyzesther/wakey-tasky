@@ -175,6 +175,7 @@ function createTaskCard(task) {
             const taskItem = document.createElement('div');
             taskItem.className = 'tasklist-item';
             taskItem.dataset.subtaskId = subtask.id;
+            taskItem.dataset.taskId = task.id;
             
             // 根据子任务状态选择图标
             const iconSrc = subtask.status === 'COMPLETED' ? 
@@ -187,18 +188,40 @@ function createTaskCard(task) {
             // 确定番茄钟图标
             const tomatoIcons = generateTomatoIcons(duration);
             
-            // 构建子任务HTML
+            // 构建子任务HTML，包含悬停时的编辑按钮
             taskItem.innerHTML = `
-                <img src="${iconSrc}" class="task-icon" alt="${subtask.status === 'COMPLETED' ? 'Done' : 'To do'}" />
-                <span class="task-desc">${subtask.title}</span>
-                <div class="tomato-icons">
-                    ${tomatoIcons}
+                <div class="subtask-content">
+                    <img src="${iconSrc}" class="task-icon" alt="${subtask.status === 'COMPLETED' ? 'Done' : 'To do'}" />
+                    <span class="task-desc">${subtask.title}</span>
+                    <div class="tomato-icons">
+                        ${tomatoIcons}
+                    </div>
+                    <span class="task-item-time">${durationText}</span>
                 </div>
-                <span class="task-item-time">${durationText}</span>
+                
+                <!-- 悬停时显示的操作按钮 -->
+                <div class="subtask-hover-actions">
+                    <button class="action-btn edit-btn" data-action="edit" title="Edit Task">
+                        <img src="./assets/edit.svg" alt="Edit" />
+                    </button>
+                    <button class="action-btn start-btn" data-action="start" title="Start Task">
+                        <img src="./assets/start.svg" alt="Start" />
+                    </button>
+                </div>
+                
+                <!-- 模糊背景层 -->
+                <div class="subtask-blur-overlay"></div>
             `;
             
-            // 添加点击事件切换状态
-            taskItem.addEventListener('click', () => {
+            // 添加悬停事件监听器
+            setupSubtaskHoverEvents(taskItem, subtask, task);
+            
+            // 添加点击事件切换状态（只在非悬停状态下生效）
+            taskItem.addEventListener('click', (e) => {
+                // 如果点击的是操作按钮，不触发状态切换
+                if (e.target.closest('.action-btn')) {
+                    return;
+                }
                 toggleSubtaskStatus(task.id, subtask.id, subtask.status);
             });
             
@@ -337,5 +360,164 @@ async function toggleSubtaskStatus(taskId, subtaskId, currentStatus) {
         }
     } catch (error) {
         console.error('Error toggling subtask status:', error);
+    }
+}
+
+// 设置子任务悬停事件
+function setupSubtaskHoverEvents(taskItem, subtask, task) {
+    const content = taskItem.querySelector('.subtask-content');
+    const actions = taskItem.querySelector('.subtask-hover-actions');
+    const overlay = taskItem.querySelector('.subtask-blur-overlay');
+    const editBtn = taskItem.querySelector('.edit-btn');
+    const startBtn = taskItem.querySelector('.start-btn');
+    
+    let hoverTimeout;
+    
+    // 鼠标进入
+    taskItem.addEventListener('mouseenter', () => {
+        clearTimeout(hoverTimeout);
+        hoverTimeout = setTimeout(() => {
+            taskItem.classList.add('hover-active');
+        }, 200); // 200ms 延迟，避免快速滑过时触发
+    });
+    
+    // 鼠标离开
+    taskItem.addEventListener('mouseleave', () => {
+        clearTimeout(hoverTimeout);
+        taskItem.classList.remove('hover-active');
+    });
+    
+    // 编辑按钮点击事件
+    editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        editSubtask(task.id, subtask.id, subtask);
+    });
+    
+    // 开始按钮点击事件
+    startBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startSubtask(task.id, subtask.id, subtask);
+    });
+}
+
+// 编辑子任务
+function editSubtask(taskId, subtaskId, subtask) {
+    console.log('Editing subtask:', subtaskId, subtask);
+    
+    // 创建编辑模态框
+    const modal = createEditModal(subtask, (updatedData) => {
+        // 更新子任务
+        updateSubtaskData(taskId, subtaskId, updatedData);
+    });
+    
+    document.body.appendChild(modal);
+}
+
+// 开始子任务
+function startSubtask(taskId, subtaskId, subtask) {
+    console.log('Starting subtask:', subtaskId, subtask);
+    
+    // 这里可以实现番茄钟计时器功能
+    // 或者跳转到专门的计时页面
+    if (window.api.startPomodoroTimer) {
+        window.api.startPomodoroTimer(subtask.duration || 30, subtask.title);
+    } else {
+        // 简单的确认对话框
+        const confirmed = confirm(`开始执行任务："${subtask.title}"？\n预计时长：${formatDuration(subtask.duration || 30)}`);
+        if (confirmed) {
+            // 可以在这里实现计时器逻辑
+            alert('计时器功能开发中...');
+        }
+    }
+}
+
+// 创建编辑模态框
+function createEditModal(subtask, onSave) {
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal-overlay';
+    
+    modal.innerHTML = `
+        <div class="edit-modal">
+            <div class="edit-modal-header">
+                <h3>编辑子任务</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+            <div class="edit-modal-body">
+                <div class="form-group">
+                    <label for="subtask-title">任务标题</label>
+                    <input type="text" id="subtask-title" value="${subtask.title}" />
+                </div>
+                <div class="form-group">
+                    <label for="subtask-duration">预计时长（分钟）</label>
+                    <input type="number" id="subtask-duration" value="${subtask.duration || 30}" min="5" max="120" />
+                </div>
+                <div class="form-group">
+                    <label for="subtask-description">描述（可选）</label>
+                    <textarea id="subtask-description" rows="3">${subtask.description || ''}</textarea>
+                </div>
+            </div>
+            <div class="edit-modal-footer">
+                <button class="modal-btn cancel-btn">取消</button>
+                <button class="modal-btn save-btn">保存</button>
+            </div>
+        </div>
+    `;
+    
+    // 事件监听器
+    const closeBtn = modal.querySelector('.modal-close-btn');
+    const cancelBtn = modal.querySelector('.cancel-btn');
+    const saveBtn = modal.querySelector('.save-btn');
+    
+    const closeModal = () => {
+        document.body.removeChild(modal);
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    
+    saveBtn.addEventListener('click', () => {
+        const updatedData = {
+            title: modal.querySelector('#subtask-title').value.trim(),
+            duration: parseInt(modal.querySelector('#subtask-duration').value),
+            description: modal.querySelector('#subtask-description').value.trim()
+        };
+        
+        if (updatedData.title) {
+            onSave(updatedData);
+            closeModal();
+        } else {
+            alert('请输入任务标题');
+        }
+    });
+    
+    // 点击背景关闭
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    return modal;
+}
+
+// 更新子任务数据
+async function updateSubtaskData(taskId, subtaskId, updatedData) {
+    try {
+        if (window.api.updateSubtask) {
+            const response = await window.api.updateSubtask(subtaskId, updatedData);
+            if (response.success) {
+                // 重新加载任务列表
+                await loadTasks();
+            } else {
+                console.error('Failed to update subtask:', response.error);
+                alert('更新失败，请重试');
+            }
+        } else {
+            console.warn('updateSubtask API method not available');
+            alert('更新功能暂不可用');
+        }
+    } catch (error) {
+        console.error('Error updating subtask:', error);
+        alert('更新时发生错误');
     }
 }
