@@ -3,11 +3,16 @@ const express = require('express');
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// POST endpoint to generate tasks from user input
+// Import AI components
+const { getProvider } = require('../ai/registry');
+const { getTaskPrompt } = require('../ai/prompts/task');
+const { chat } = require('../ai/models/openai');
+
+// POST endpoint to generate tasks from user input using AI
 router.post('/generate-task', async (req, res) => {
   try {
     console.log('Received request body:', req.body);
-    const { text, startTime, endTime, userId } = req.body;
+    const { text, userId } = req.body;
 
     if (!text) {
       return res.status(400).json({
@@ -16,77 +21,68 @@ router.post('/generate-task', async (req, res) => {
       });
     }
 
-    // Process date and time
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // Use AI to generate tasks
+    const currentDateTime = new Date().toISOString();
+    const prompt = getTaskPrompt(text, currentDateTime);
+    
+    console.log('Calling AI with prompt:', prompt);
+    const aiResponse = await chat(prompt);
+    console.log('AI response:', aiResponse);
 
-    let scheduledDateTime = new Date(tomorrow);
-    if (startTime) {
-      try {
-        const [hours, minutes] = startTime.split(':').map(Number);
-        scheduledDateTime.setHours(hours, minutes, 0, 0);
-      } catch (e) {
-        console.error('Error parsing start time:', e);
-        scheduledDateTime.setHours(9, 0, 0, 0);
+    // Parse AI response
+    let tasksFromAI;
+    try {
+      tasksFromAI = JSON.parse(aiResponse);
+      if (!Array.isArray(tasksFromAI)) {
+        throw new Error('AI response is not an array');
       }
-    } else {
-      scheduledDateTime.setHours(9, 0, 0, 0);
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', parseError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to parse AI response',
+        details: parseError.message
+      });
     }
 
-    let endDateTime = null;
-    if (endTime) {
-      try {
-        endDateTime = new Date(tomorrow);
-        const [hours, minutes] = endTime.split(':').map(Number);
-        endDateTime.setHours(hours, minutes, 0, 0);
-      } catch (e) {
-        console.error('Error parsing end time:', e);
-      }
-    }
-
-    // Create main task and subtasks
-    const data = {
-      title: `Task: ${text.substring(0, 30)}${text.length > 30 ? '...' : ''}`,
-      description: text,
-      status: 'PENDING',
-      subtasks: {
-        create: [
-          {
-            title: 'Prepare for task',
-            status: 'PENDING',
-            startAt: scheduledDateTime,
-            endAt: new Date(scheduledDateTime.getTime() + 30 * 60000)
-          },
-          {
-            title: 'Complete task',
-            status: 'PENDING',
-            startAt: new Date(scheduledDateTime.getTime() + 30 * 60000),
-            endAt: endDateTime || new Date(scheduledDateTime.getTime() + 90 * 60000)
+    // Create tasks in database based on AI response
+    const createdTasks = await Promise.all(
+      tasksFromAI.map(async (taskData) => {
+        const taskCreateData = {
+          title: taskData.title,
+          status: taskData.status || 'PENDING',
+          duration: taskData.duration || 5, // Default to 5 minutes if no subtasks
+          subtasks: {
+            create: taskData.subtasks?.map(subtask => ({
+              title: subtask.title,
+              status: subtask.status || 'PENDING',
+              duration: subtask.duration
+            })) || []
           }
-        ]
-      }
-    };
+        };
 
-    // if userId is provided, add user to the task
-    if (userId) {
-      data.user = { connect: { id: userId } };
-    }
+        // Add user connection if userId is provided
+        if (userId) {
+          taskCreateData.user = { connect: { id: userId } };
+        }
 
-    const task = await prisma.mainTask.create({
-      data,
-      include: { subtasks: true }
-    });
+        return prisma.mainTask.create({
+          data: taskCreateData,
+          include: { subtasks: true }
+        });
+      })
+    );
 
     res.status(201).json({
       success: true,
-      data: task
+      data: createdTasks
     });
 
   } catch (error) {
-    console.error('Error creating task:', error);
+    console.error('Error generating tasks:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create task',
+      error: 'Failed to generate tasks',
       details: error.message
     });
   }
@@ -292,41 +288,5 @@ router.patch('/subtasks/:id/status', async (req, res) => {
     });
   }
 });
-
-// 更新子任务状态
-router.patch('/tasks/:taskId/subtasks/:subtaskId', async (req, res) => {
-  const { taskId, subtaskId } = req.params;
-  const { status } = req.body;
-  
-  if (!status || !['PENDING', 'IN_PROGRESS', 'COMPLETED'].includes(status)) {
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid status value. Must be one of: PENDING, IN_PROGRESS, COMPLETED'
-    });
-  }
-  
-  try {
-    const updatedSubtask = await prisma.subTask.update({
-      where: {
-        id: parseInt(subtaskId)
-      },
-      data: {
-        status
-      }
-    });
-    
-    res.json({
-      success: true,
-      data: updatedSubtask
-    });
-  } catch (error) {
-    console.error('Error updating subtask status:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update subtask status'
-    });
-  }
-});
-
 
 module.exports = router;
