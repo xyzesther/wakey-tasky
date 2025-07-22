@@ -416,18 +416,10 @@ function editSubtask(taskId, subtaskId, subtask) {
 // 开始子任务
 function startSubtask(taskId, subtaskId, subtask) {
     console.log('Starting subtask:', subtaskId, subtask);
-    
-    // 这里可以实现番茄钟计时器功能
-    // 或者跳转到专门的计时页面
-    if (window.api.startPomodoroTimer) {
-        window.api.startPomodoroTimer(subtask.duration || 30, subtask.title);
+    if (window.api && window.api.openPomodoro) {
+        window.api.openPomodoro(subtaskId, subtask.title, subtask.duration, task.title);
     } else {
-        // 简单的确认对话框
-        const confirmed = confirm(`开始执行任务："${subtask.title}"？\n预计时长：${formatDuration(subtask.duration || 30)}`);
-        if (confirmed) {
-            // 可以在这里实现计时器逻辑
-            alert('计时器功能开发中...');
-        }
+        alert('Pomodoro integration not available.');
     }
 }
 

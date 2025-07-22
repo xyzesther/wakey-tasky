@@ -279,6 +279,58 @@ ipcMain.handle('open-tasklist-window', () => {
     return true;
 });
 
+// Add IPC handler to open Pomodoro window
+ipcMain.handle('open-pomodoro', (event, subtaskId, title, duration) => {
+    const pomodoroWindow = new BrowserWindow({
+        width: 400,
+        height: 400,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        resizable: false,
+        modal: true,
+        show: false, // Don't show until loaded
+        webPreferences: {
+            preload: path.join(__dirname, '../preload/preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true
+        }
+    });
+    
+    // Load the HTML file first
+    const htmlPath = path.join(__dirname, '../../public/pomodoro.html');
+    console.log('Loading Pomodoro HTML from:', htmlPath);
+    
+    pomodoroWindow.loadFile(htmlPath);
+    
+    // Once the page is loaded, send the data
+    pomodoroWindow.webContents.once('dom-ready', () => {
+        pomodoroWindow.webContents.send('pomodoro-data', {
+            subtaskId,
+            title,
+            duration,
+            mainTaskTitle
+        });
+        pomodoroWindow.show();
+        pomodoroWindow.focus();
+    });
+    
+    return pomodoroWindow;
+});
+
+// Add IPC handler to complete subtask
+ipcMain.handle('complete-subtask', async (event, subtaskId) => {
+    try {
+        await prisma.subtask.update({
+            where: { id: subtaskId },
+            data: { status: 'COMPLETED' }
+        });
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
 // ----------------------------------------------------------------------------
 // App lifecycle events
 // ----------------------------------------------------------------------------
