@@ -12,20 +12,25 @@
             <div class="window-control close-button" id="chatCloseButton"></div>
             <div class="window-control minimize-button" id="chatMinimizeButton"></div>
         </div>
-        <div class="chatbox_icon-outer">
-             <img src="./assets/chatbox_icon.svg" alt="chatbox_icon" />
+        
+        <div class="tasklist-header">
+            <div class="chatbox_icon-outer">
+                <img src="./assets/chatbox_icon.svg" alt="chatbox_icon" />
+            </div>
         </div>
         
-        <!-- 这里将由 JavaScript 动态填充内容 -->
-        <div id="tasklistContainer">
-            <!-- 任务加载中的提示 -->
-            <div id="loadingIndicator" class="loading-indicator">
-                <span>Loading tasks...</span>
-            </div>
-            
-            <!-- 没有任务时的提示 -->
-            <div id="noTasksMessage" class="no-tasks-message" style="display: none;">
-                <span>No tasks found. Create some tasks to get started!</span>
+        <!-- 可滚动的任务容器 -->
+        <div class="tasklist-scroll-container">
+            <div id="tasklistContainer" class="tasklist-content">
+                <!-- 任务加载中的提示 -->
+                <div id="loadingIndicator" class="loading-indicator">
+                    <span>Loading tasks...</span>
+                </div>
+                
+                <!-- 没有任务时的提示 -->
+                <div id="noTasksMessage" class="no-tasks-message" style="display: none;">
+                    <span>No tasks found. Create some tasks to get started!</span>
+                </div>
             </div>
         </div>
     </div>

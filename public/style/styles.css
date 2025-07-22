@@ -735,80 +735,914 @@ body {
     margin-bottom: 12px;
 }
 .tasklist-item {
+    position: relative;
+    padding: 8px 15px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 0.75rem;
-    color: #151513;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: visible; /* 允许按钮显示在外部 */
+    min-height: 50px;
 }
+
+.tasklist-item:last-child {
+    border-bottom: none;
+}
+
+.tasklist-item:hover {
+    background-color: #f8f9fa;
+}
+
 .task-icon {
-    width: 26px;
-    height: 26px;
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    flex-shrink: 0;
 }
 .task-desc {
     flex: 1;
-}
-.task-item-time {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 1rem;
-    color: #151513;
+    font-size: 14px;
+    color: #333;
+    margin-right: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
 }
 
-.tasklist-container {
+/* 番茄时钟图标容器 */
+.tomato-icons {
     display: flex;
-    flex-direction: column;
-    height: 100vh; /* 视口高度 */
-    background-color: #f5f5f7;
+    align-items: center;
+    margin: 0 12px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.tomato-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.task-item-time {
+    font-size: 12px;
+    color: #777;
+    min-width: 45px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* 子任务列表 */
+.tasklist-items {
+    background-color: #ffffff;
+}
+
+/* 子任务项样式修复 */
+.tasklist-item {
+    position: relative;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: visible; /* 允许按钮显示在外部 */
+    min-height: 50px;
+}
+
+.tasklist-item:last-child {
+    border-bottom: none;
+}
+
+.tasklist-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* 子任务内容 */
+.subtask-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    transition: filter 0.3s ease;
+    z-index: 2;
     position: relative;
 }
 
-#tasklistContainer {
-    flex: 1; /* 占用剩余所有空间 */
-    overflow-y: auto; /* 启用垂直滚动 */
-    padding: 15px;
+/* 悬停时的模糊效果 */
+.tasklist-item.hover-active .subtask-content {
+    filter: blur(2px);
 }
 
-/* 美化滚动条 (适用于WebKit浏览器) */
-#tasklistContainer::-webkit-scrollbar {
-    width: 8px;
+.task-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    flex-shrink: 0;
 }
 
-#tasklistContainer::-webkit-scrollbar-track {
+.task-desc {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+    margin-right: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
+}
+
+/* 番茄时钟图标容器 */
+.tomato-icons {
+    display: flex;
+    align-items: center;
+    margin: 0 12px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.tomato-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.task-item-time {
+    font-size: 12px;
+    color: #777;
+    min-width: 45px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* 悬停操作按钮 */
+.subtask-hover-actions {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 10;
+    pointer-events: none; /* 默认不响应鼠标事件 */
+}
+
+.tasklist-item.hover-active .subtask-hover-actions {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto; /* 悬停时响应鼠标事件 */
+}
+
+/* 操作按钮样式 */
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.edit-btn {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.edit-btn:hover {
+    background-color: #e9ecef;
+    transform: scale(1.05);
+}
+
+.start-btn {
+    background-color: #000;
+}
+
+.start-btn:hover {
+    background-color: #333;
+    transform: scale(1.05);
+}
+
+.action-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+/* 模糊背景层 */
+.subtask-blur-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.tasklist-item.hover-active .subtask-blur-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 进度条样式 */
+.task-progress {
+    padding: 16px 20px 20px;
+    background-color: #ffffff;
+    border-top: 1px solid #f0f0f0;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-bar-fg {
+    height: 100%;
+    background-color: #4CAF50;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progress-label {
+    font-size: 12px;
+    color: #777;
+    text-align: right;
+}
+
+/* 加载和空状态样式 */
+.loading-indicator,
+.no-tasks-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.loading-indicator span:after {
+    content: '...';
+    animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        color: rgba(0,0,0,0);
+        text-shadow:
+            .25em 0 0 rgba(0,0,0,0),
+            .5em 0 0 rgba(0,0,0,0);
+    }
+    40% {
+        color: #666;
+        text-shadow:
+            .25em 0 0 rgba(0,0,0,0),
+            .5em 0 0 rgba(0,0,0,0);
+    }
+    60% {
+        text-shadow:
+            .25em 0 0 #666,
+            .5em 0 0 rgba(0,0,0,0);
+    }
+    80%, 100% {
+        text-shadow:
+            .25em 0 0 #666,
+            .5em 0 0 #666;
+    }
+}
+
+/* 编辑模态框样式（保持不变） */
+.edit-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.edit-modal {
+    background: white;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.edit-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    color: #666;
+}
+
+.edit-modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Manrope', sans-serif;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #0084ff;
+    box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.1);
+}
+
+.edit-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.cancel-btn:hover {
+    background-color: #e9ecef;
+}
+
+.save-btn {
+    background-color: #0084ff;
+    color: white;
+}
+
+.save-btn:hover {
+    background-color: #0056b3;
+}
+
+/* 任务列表容器样式 */
+.tasklist-container {
+    width: 100%;
+    height: 100vh;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Manrope', sans-serif;
+    overflow: hidden; /* 防止整个容器滚动 */
+}
+
+/* 固定在顶部的头部 */
+.tasklist-header {
+    flex-shrink: 0;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #ffffff;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tasklist-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.chatbox_icon-outer {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chatbox_icon-outer img {
+    width: 32px;
+    height: 32px;
+}
+
+/* 可滚动的任务容器 */
+.tasklist-scroll-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    background-color: #fafafa;
+}
+
+/* 滚动条样式 */
+.tasklist-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tasklist-scroll-container::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 4px;
 }
 
-#tasklistContainer::-webkit-scrollbar-thumb {
+.tasklist-scroll-container::-webkit-scrollbar-thumb {
     background: #c1c1c1;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
-#tasklistContainer::-webkit-scrollbar-thumb:hover {
+.tasklist-scroll-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
 
-/* Progress Bar */
-.tasklist-progress {
-    margin-top: 18px;
+/* 任务内容容器 */
+.tasklist-content {
+    padding: 0px;
+    min-height: 100%;
 }
+
+/* 任务卡片样式 */
+.tasklist-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.tasklist-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* 任务卡片头部 */
+.tasklist-card-header {
+    padding: 16px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.chevron {
+    width: 16px;
+    height: 16px;
+    margin-right: 12px;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.task-title {
+    flex: 1;
+    margin-right: 15px;
+}
+
+.task-title span {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.4;
+}
+
+.task-time {
+    text-align: right;
+    font-size: 14px;
+    color: #666;
+}
+
+.task-time .time-info {
+    font-size: 11px;
+    color: #999;
+    font-style: italic;
+    margin-top: 2px;
+}
+
+/* 子任务列表 */
+.tasklist-items {
+    background-color: #ffffff;
+}
+
+/* 子任务项样式修复 */
+.tasklist-item {
+    position: relative;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: visible; /* 允许按钮显示在外部 */
+    min-height: 50px;
+}
+
+.tasklist-item:last-child {
+    border-bottom: none;
+}
+
+.tasklist-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* 子任务内容 */
+.subtask-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    transition: filter 0.3s ease;
+    z-index: 2;
+    position: relative;
+}
+
+/* 悬停时的模糊效果 */
+.tasklist-item.hover-active .subtask-content {
+    filter: blur(2px);
+}
+
+.task-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.task-desc {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+    margin-right: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
+}
+
+/* 番茄时钟图标容器 */
+.tomato-icons {
+    display: flex;
+    align-items: center;
+    margin: 0 12px;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.tomato-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.task-item-time {
+    font-size: 12px;
+    color: #777;
+    min-width: 45px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* 悬停操作按钮 */
+.subtask-hover-actions {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 10;
+    pointer-events: none; /* 默认不响应鼠标事件 */
+}
+
+.tasklist-item.hover-active .subtask-hover-actions {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto; /* 悬停时响应鼠标事件 */
+}
+
+/* 操作按钮样式 */
+.action-btn {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 0; 
+    margin: 0;  
+}
+
+.edit-btn {
+    width: 36px;
+    height: 36px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.edit-btn:hover {
+    background-color: #e9ecef;
+    transform: scale(1.05);
+}
+
+.start-btn {
+    /* 让按钮大小完全由SVG决定 */
+    width: 36px;
+    height: 36px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+
+}
+
+.start-btn:hover {
+    background-color: #e9ecef;
+    transform: scale(1.05);
+}
+
+.action-btn img {
+    width: 16px;
+    height: 16px;
+}
+
+/* 模糊背景层 */
+.subtask-blur-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.tasklist-item.hover-active .subtask-blur-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 进度条样式 */
+.task-progress {
+    padding: 16px 20px 20px;
+    background-color: #ffffff;
+    border-top: 1px solid #f0f0f0;
+}
+
 .progress-bar-bg {
     width: 100%;
-    height: 8px;
-    background: #f3eafd;
-    border-radius: 6px;
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
+
 .progress-bar-fg {
     height: 100%;
-    background: #bfa6f2;
-    border-radius: 6px 0 0 6px;
+    background-color: #4CAF50;
+    border-radius: 3px;
+    transition: width 0.3s ease;
 }
+
 .progress-label {
+    font-size: 12px;
+    color: #777;
     text-align: right;
-    font-size: 1rem;
-    color: #151513;
-    margin-top: 2px;
+}
+
+/* 加载和空状态样式 */
+.loading-indicator,
+.no-tasks-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+.loading-indicator span:after {
+    content: '...';
+    animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        color: rgba(0,0,0,0);
+        text-shadow:
+            .25em 0 0 rgba(0,0,0,0),
+            .5em 0 0 rgba(0,0,0,0);
+    }
+    40% {
+        color: #666;
+        text-shadow:
+            .25em 0 0 rgba(0,0,0,0),
+            .5em 0 0 rgba(0,0,0,0);
+    }
+    60% {
+        text-shadow:
+            .25em 0 0 #666,
+            .5em 0 0 rgba(0,0,0,0);
+    }
+    80%, 100% {
+        text-shadow:
+            .25em 0 0 #666,
+            .5em 0 0 #666;
+    }
+}
+
+/* 编辑模态框样式（保持不变） */
+.edit-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.edit-modal {
+    background: white;
+    border-radius: 12px;
+    width: 400px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.edit-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.edit-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close-btn:hover {
+    color: #666;
+}
+
+.edit-modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: 'Manrope', sans-serif;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #0084ff;
+    box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.1);
+}
+
+.edit-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    transition: all 0.2s ease;
+}
+
+.cancel-btn {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+
+.cancel-btn:hover {
+    background-color: #e9ecef;
+}
+
+.save-btn {
+    background-color: #0084ff;
+    color: white;
+}
+
+.save-btn:hover {
+    background-color: #0056b3;
 }

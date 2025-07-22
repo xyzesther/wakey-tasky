@@ -215,6 +215,30 @@ const api = {
             };
         }
     },
+
+    // 更新子任务
+    updateSubtask: async (subtaskId, updatedData) => {
+        try {
+            const response = await fetch(`http://localhost:3000/api/subtasks/${subtaskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData),
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                return { success: false, error: `Server error (${response.status}): ${errorText}` };
+            }
+            
+            const data = await response.json();
+            return { success: true, data };
+        } catch (error) {
+            console.error('Error updating subtask:', error);
+            return { success: false, error: error.message };
+        }
+    },
 };
 
 // Expose the API
