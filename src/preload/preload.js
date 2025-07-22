@@ -216,7 +216,7 @@ const api = {
         }
     },
 
-    // 更新子任务
+    // update subtask
     updateSubtask: async (subtaskId, updatedData) => {
         try {
             const response = await fetch(`http://localhost:3000/api/subtasks/${subtaskId}`, {
@@ -240,14 +240,23 @@ const api = {
         }
     },
 
+    // open Pomodoro window
     openPomodoro: (subtaskId, title, duration) => ipcRenderer.invoke('open-pomodoro', subtaskId, title, duration),
+    
+
+    // For receiving Pomodoro data
+    onPomodoroData: (callback) => {
+        ipcRenderer.on('pomodoro-data', (event, data) => {
+            callback(data);
+        });
+    },
     completeSubtask: (subtaskId) => ipcRenderer.invoke('complete-subtask', subtaskId),
 };
 
 // Expose the API
 contextBridge.exposeInMainWorld('api', api);
 
-// 添加日志以确认方法存在
+// check if the api methods are available
 console.log('API methods available:', Object.keys(window.api).join(', '));
 
 console.log('Preload script completed. API exposed:', Object.keys(api));

@@ -284,15 +284,38 @@ ipcMain.handle('open-pomodoro', (event, subtaskId, title, duration) => {
     const pomodoroWindow = new BrowserWindow({
         width: 400,
         height: 400,
+        frame: false,
+        transparent: true,
+        alwaysOnTop: true,
+        resizable: false,
         modal: true,
-        show: true,
+        show: false, // Don't show until loaded
         webPreferences: {
-            preload: path.join(__dirname, '../preload/preload.js')
+            preload: path.join(__dirname, '../preload/preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true
         }
     });
-    const query = `?subtaskId=${encodeURIComponent(subtaskId)}&title=${encodeURIComponent(title)}&duration=${encodeURIComponent(duration)}`;
-    pomodoroWindow.loadFile(path.join(__dirname, '../../public/pomodoro.html') + query);
-    pomodoroWindow.focus();
+    
+    // Load the HTML file first
+    const htmlPath = path.join(__dirname, '../../public/pomodoro.html');
+    console.log('Loading Pomodoro HTML from:', htmlPath);
+    
+    pomodoroWindow.loadFile(htmlPath);
+    
+    // Once the page is loaded, send the data
+    pomodoroWindow.webContents.once('dom-ready', () => {
+        pomodoroWindow.webContents.send('pomodoro-data', {
+            subtaskId,
+            title,
+            duration,
+            mainTaskTitle
+        });
+        pomodoroWindow.show();
+        pomodoroWindow.focus();
+    });
+    
+    return pomodoroWindow;
 });
 
 // Add IPC handler to complete subtask
