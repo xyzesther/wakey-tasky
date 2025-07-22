@@ -133,7 +133,7 @@ const api = {
         return ipcRenderer.invoke('open-chatbox');
     },
     
-    // Close current window (for chatbox)
+    // Close current window
     closeWindow: () => {
         ipcRenderer.send('close-window');
     },
@@ -152,9 +152,75 @@ const api = {
     openTaskCreation: () => {
         ipcRenderer.send('open-task-creation');
     },
+    
+    // // Open Talk with AI window
+    // openTalkWithAI: () => {
+    //     console.log('preload openTalkWithAI');
+    //     return ipcRenderer.invoke('open-talkwithai');
+    // },
+
+    // Open Task List Window
+    openTaskListWindow: () => {
+        console.log('preload openTaskListWindow');
+        return ipcRenderer.invoke('open-tasklist-window');
+    },
+
+    // Send message to AI and get response
+    sendAIMessage: async (message) => {
+        console.log('sendAIMessage called with message:', message);
+        try {
+            const response = await fetch('http://localhost:3000/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    prompt: message,
+                }),
+            });
+            
+            console.log('AI API response status:', response.status);
+            const data = await response.json();
+            console.log('AI API response data:', data);
+            return data;
+        } catch (error) {
+            console.error('Error in sendAIMessage:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    updateSubtaskStatus: async (taskId, subtaskId, newStatus) => {
+        try {
+            const response = await fetch(`${API_URL}/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            
+            if (!response.ok) {
+                return { 
+                    success: false, 
+                    error: `Server error (${response.status})` 
+                };
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating subtask status:', error);
+            return { 
+                success: false, 
+                error: error.message || 'Network error' 
+            };
+        }
+    },
 };
 
 // Expose the API
 contextBridge.exposeInMainWorld('api', api);
 
-console.log('Preload script completed. API exposed:', Object.keys(api)); 
+// 添加日志以确认方法存在
+console.log('API methods available:', Object.keys(window.api).join(', '));
+
+console.log('Preload script completed. API exposed:', Object.keys(api));

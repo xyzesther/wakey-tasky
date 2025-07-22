@@ -23,7 +23,7 @@ model MainTask {
   userId      String?
   user        User?       @relation(fields: [userId], references: [id])
   title       String
-  description String?
+  duration    Int?
   subtasks    Subtask[]
   status      TaskStatus  @default(PENDING)
 }
@@ -33,9 +33,7 @@ model Subtask {
   taskId      String
   task        MainTask    @relation(fields: [taskId], references: [id])
   title       String
-  description String?
-  startAt     DateTime?
-  endAt       DateTime?
+  duration    Int
   status      TaskStatus  @default(PENDING)
 }
 

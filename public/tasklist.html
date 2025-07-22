@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task List</title>
+    <link rel="stylesheet" href="./style/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap">
+</head>
+<body>
+    <div class="tasklist-container">
+        <div class="window-controls">
+            <div class="window-control close-button" id="chatCloseButton"></div>
+            <div class="window-control minimize-button" id="chatMinimizeButton"></div>
+        </div>
+        <div class="chatbox_icon-outer">
+             <img src="./assets/chatbox_icon.svg" alt="chatbox_icon" />
+        </div>
+        
+        <!-- 这里将由 JavaScript 动态填充内容 -->
+        <div id="tasklistContainer">
+            <!-- 任务加载中的提示 -->
+            <div id="loadingIndicator" class="loading-indicator">
+                <span>Loading tasks...</span>
+            </div>
+            
+            <!-- 没有任务时的提示 -->
+            <div id="noTasksMessage" class="no-tasks-message" style="display: none;">
+                <span>No tasks found. Create some tasks to get started!</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加脚本引用 -->
+    <script src="../src/renderer/tasklist.js"></script>
+    <script src="../src/utils/windowUtils.js"></script>
+</body>
+</html>

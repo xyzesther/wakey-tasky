@@ -6,11 +6,20 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Import our Express server
-const server = require('./server');
+const server = require('../server');
+
+// ----------------------------------------------------------------------------
+// Application window creation and management
+// ----------------------------------------------------------------------------
 
 // Store references to windows
 let mainWindow;
 let chatboxWindow;
+let taskListWindow;
+
+// Position information for chatbox and task list windows
+let chatboxPosition = { x: 0, y: 0 };
+let taskListPosition = { x: 0, y: 0 };
 
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
@@ -35,7 +44,7 @@ function createMainWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, '../preload/preload.js') // Use preload script for secure context
         }
     });
 
@@ -50,8 +59,81 @@ function createMainWindow() {
     mainWindow.setMovable(true);
     
     // Load the HTML file
-    mainWindow.loadFile(path.join(__dirname, './renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '../../public/index.html'));
 }
+
+
+
+// Function to create the chatbox window
+function createChatboxWindow() {
+    chatboxWindow = new BrowserWindow({
+        width: 400,
+        height: 500,
+        frame: false,
+        transparent: true,
+        webPreferences: {
+            preload: path.join(__dirname, '../preload/preload.js')
+        }
+    });
+    
+    chatboxWindow.loadFile(path.join(__dirname, '../../public/chatbox.html'));
+    
+    // 存储 chatbox 窗口位置，用于任务列表窗口定位
+    chatboxPosition = chatboxWindow.getPosition();
+    
+    chatboxWindow.on('closed', () => {
+        chatboxWindow = null;
+    });
+    
+    // 当 chatbox 窗口移动时，更新位置信息
+    chatboxWindow.on('move', () => {
+        if (chatboxWindow) {
+            chatboxPosition = chatboxWindow.getPosition();
+            
+            // 如果任务列表窗口已打开，同步移动它
+            if (taskListWindow) {
+                positionTaskListWindow();
+            }
+        }
+    });
+}
+
+// 创建任务列表窗口的函数
+function createTaskListWindow() {
+    taskListWindow = new BrowserWindow({
+        width: 400,
+        height: 600,
+        frame: false,
+        transparent: true,
+        webPreferences: {
+            preload: path.join(__dirname, '../preload/preload.js')
+        }
+    });
+    
+    taskListWindow.loadFile(path.join(__dirname, '../../public/tasklist.html'));
+    
+    // 定位任务列表窗口
+    positionTaskListWindow();
+    
+    taskListWindow.on('closed', () => {
+        taskListWindow = null;
+    });
+}
+
+// 定位任务列表窗口在 chatbox 下方
+function positionTaskListWindow() {
+    if (!taskListWindow || !chatboxWindow) return;
+    
+    const [x, y] = chatboxWindow.getPosition();
+    const [width, height] = chatboxWindow.getSize();
+    
+    // 将任务列表窗口放在 chatbox 下方，保持 x 坐标一致
+    taskListWindow.setPosition(x, y + height + 10);
+}
+
+// ----------------------------------------------------------------------------
+// IPC Handlers
+// ----------------------------------------------------------------------------
 
 // Handle IPC resize-window event
 ipcMain.handle('resize-window', (event, { width, height }) => {
@@ -102,52 +184,6 @@ ipcMain.on('window-drag-end', () => {
     }
 });
 
-// Function to create the chatbox window
-function createChatboxWindow() {
-    // If chatbox window already exists, just focus it and return
-    if (chatboxWindow) {
-        chatboxWindow.focus();
-        return;
-    }
-    
-    chatboxWindow = new BrowserWindow({
-        title: 'WakeyTasky Chat',
-        width: 370, // Slightly wider to ensure full content display
-        height: 180, // Increased height to accommodate the layout
-        frame: false,
-        transparent: true,
-        resizable: false,
-        alwaysOnTop: false, // Don't keep on top
-        skipTaskbar: false, // Show in taskbar
-        movable: true,
-        show: true,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js')
-        }
-    });
-    
-    // Hide the menu bar
-    chatboxWindow.setMenuBarVisibility(false);
-    
-    // Load the chatbox HTML file
-    chatboxWindow.loadFile(path.join(__dirname, './renderer/chatbox.html'));
-    
-    // Center the window on screen
-    chatboxWindow.center();
-    
-    // Handle window close
-    chatboxWindow.on('closed', () => {
-        chatboxWindow = null;
-        
-        // Show the main window again when the chatbox is closed
-        if (mainWindow) {
-            mainWindow.show();
-        }
-    });
-}
-
 // IPC handler to open chatbox window
 ipcMain.handle('open-chatbox', (event) => {
     // Hide the main window when opening the chatbox
@@ -163,11 +199,8 @@ ipcMain.handle('open-chatbox', (event) => {
 ipcMain.on('close-window', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-        // If it's the chatbox being closed, show the main window
-        if (win === chatboxWindow) {
-            if (mainWindow) {
-                mainWindow.show();
-            }
+        if (mainWindow) {
+            mainWindow.show();
         }
         
         win.close();
@@ -218,6 +251,37 @@ ipcMain.on('open-task-creation', () => {
         chatboxWindow.close();
     }
 });
+
+// // IPC handler to open the Talk with AI view
+// ipcMain.handle('open-talkwithai', () => {
+//     const filePath = path.join(__dirname, '../../public/talkwithai.html');
+//     console.log('main open-talkwithai, loading:', filePath);
+//     if (chatboxWindow) {
+//         chatboxWindow.loadFile(filePath);
+//         chatboxWindow.setSize(350, 480); // Set size for Talk with AI view
+//     }
+// });
+
+// IPC handler to open the Task List window
+ipcMain.handle('open-tasklist-window', () => {
+    console.log('main: open-tasklist-window received');
+    if (taskListWindow) {
+        taskListWindow.show();
+    } else {
+        createTaskListWindow();
+    }
+    
+    // 确保 chatbox 窗口保持在前
+    if (chatboxWindow) {
+        chatboxWindow.focus();
+    }
+    
+    return true;
+});
+
+// ----------------------------------------------------------------------------
+// App lifecycle events
+// ----------------------------------------------------------------------------
 
 app.whenReady().then(() => {
     createMainWindow();

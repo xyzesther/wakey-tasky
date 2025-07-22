@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WakeyTasky Chat</title>
+    <link rel="stylesheet" href="./style/styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap">
+
+</head>
+<body>
+    <div class="chatbox-container">
+        <div class="window-controls">
+            <div class="window-control close-button" id="chatCloseButton"></div>
+            <div class="window-control minimize-button" id="chatMinimizeButton"></div>
+        </div>
+        <div class="app-icon">
+            <img src="./assets/chatbox_icon.svg" class="clock-icon">
+        </div>
+        
+        <!-- 替换原来的 prompt-bar 为 消息区域 -->
+        <div class="talkwithai-messages" id="aiMessages">
+            <!-- 初始 AI 消息 -->
+            <div class="ai-bubble">
+                <img class="ai-avatar" src="./assets/talking_icon.svg" alt="AI" />
+                <div class="ai-bubble-content">
+                    Hi! How can I help you with your tasks today?
+                </div>
+            </div>
+        </div>
+        
+        <!-- 添加输入栏，与 talkwithai.html 相同样式 -->
+        <div class="talkwithai-inputbar">
+            <input type="text" id="chatInput" placeholder="Type your message..." autocomplete="off" />
+            <button id="chatSendBtn" class="talkwithai-send-btn">
+                <img src="./assets/send_icon.svg" alt="Send" />
+            </button>
+        </div>
+        
+        <!-- 保留原来的图标区域，但隐藏起来 -->
+        <div class="prompt-icons" style="display: none;">
+            <img src="./assets/folder_icon.svg" class="prompt-icon" id="folderIcon">
+            <img src="./assets/send_icon.svg" class="prompt-icon" id="sendIcon">
+        </div>
+    </div>
+    <script src="../src/renderer/chatbox.js"></script>
+    <script src="../src/utils/windowUtils.js"></script>
+</body>
+</html>

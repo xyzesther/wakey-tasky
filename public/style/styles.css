@@ -1,0 +1,814 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
+
+.manrope {
+  font-family: "Manrope", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* App States */
+.app-container {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* State 1: Minimized Circle */
+.minimized-icon {
+    width: 60px;
+    height: 60px;
+    background-color: #F8F8F8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s;
+    position: absolute;
+    z-index: 1000;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.minimized-icon .clock-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.clock-frame {
+    width: 100%;
+    height: 100%;
+    border: 2px solid #151513;
+    border-radius: 4px;
+    background-color: #FEFEFC;
+    position: relative;
+}
+
+.clock-hands {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.clock-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background-color: #151513;
+    border-radius: 50%;
+}
+
+.clock-dot-1 {
+    top: 8px;
+    left: 8px;
+}
+
+.clock-dot-2 {
+    top: 8px;
+    right: 8px;
+}
+
+.minimized-icon:hover {
+    transform: scale(1.05);
+}
+
+/* State 2: Input Box */
+.input-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.input-header {
+    background-color: #0066cc;
+    color: white;
+    padding: 12px 15px;
+    font-weight: bold;
+}
+
+.input-form {
+    padding: 15px;
+}
+
+.input-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.input-box input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.send-button {
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.send-button:hover {
+    background-color: #0055aa;
+}
+
+.send-button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+.time-selectors {
+    display: flex;
+    gap: 10px;
+}
+
+.time-selector {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.time-selector label {
+    font-size: 14px;
+    color: #666;
+}
+
+.time-selector input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* State 3: Task List */
+.task-list-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.task-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.task-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.task-time {
+    color: #666;
+    font-size: 14px;
+}
+
+.task-status {
+    font-size: 12px;
+    color: #0066cc;
+    margin-bottom: 8px;
+}
+
+.subtasks {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.subtask {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 5px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+/* Error Dialog */
+.error-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.error-content {
+    background-color: white;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 350px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.error-icon {
+    margin-bottom: 15px;
+}
+
+.error-icon i {
+    font-size: 40px;
+    color: #0066cc;
+}
+
+.error-message {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.error-button {
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 25px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.error-button:hover {
+    background-color: #0055aa;
+}
+
+/* Add these styles for the delete button */
+.task-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-button {
+    background-color: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.delete-button:hover {
+    background-color: #cc0000;
+}
+
+/* Add these styles for the chatbox interface */
+.chatbox-container {
+    position: relative;
+    width: 350px;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 防止整体滚动 */
+    background-color: #f5f5f7;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.window-controls {
+    position:absolute;
+    top: 12px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 0px 8px;
+    height: 12px;
+    z-index:1000;
+}
+
+.window-control {
+    width: 12px;
+    height: 12px;
+    border-radius: 100px;
+    border: 0.5px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.close-button {
+    background-color: #FF5F57;
+    cursor: pointer;
+}
+
+.minimize-button {
+    background-color: #FEBC2E;
+    cursor: pointer;
+}
+
+.zoom-button {
+    background-color: #28C840;
+    cursor: pointer;
+}
+
+.app-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    flex-shrink: 0; /* 防止压缩 */
+}
+
+.app-icon .clock-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.prompt-bar {
+    background-color: rgba(21, 21, 19, 0.08);
+    border-radius: 25px;
+    padding: 17px 15px 17px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 35px); /* Account for padding */
+    box-sizing: border-box;
+    margin: 0 auto 5px auto;
+}
+
+.prompt-text {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: rgba(21, 21, 19, 0.5);
+}
+
+.prompt-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.prompt-icon {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    object-fit: contain;
+}
+
+New styles for Talk with AI feature
+.talkwithai-container {
+    width: 350px;
+    height: 480px;
+    background: #FEFEFC;
+    border-radius: 17px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Manrope', sans-serif;
+    overflow: hidden;
+}
+
+.talkwithai-header {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 18px;
+    border-bottom: 1px solid #F0F0ED;
+    background: #FEFEFC;
+    flex-shrink: 0;
+}
+
+
+.talkwithai-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #151513;
+}
+
+.talkwithai-messages {
+    flex: 1;
+    overflow-y: auto;
+    background: #F7F7F5;
+    padding: 18px 14px 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    max-height: calc(100% - 120px); /* 减去其他元素的高度 */
+}
+
+.ai-bubble, .user-bubble {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.ai-bubble {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.user-bubble {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+.ai-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 100%;
+    background: #E0E0E0;
+}
+
+.ai-bubble-content {
+    background: #F0F0ED;
+    color: #151513;
+    border-radius: 14px 14px 14px 4px;
+    padding: 10px 16px;
+    font-size: 12px;
+    max-width: 210px;
+    word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.user-bubble-content {
+    background: #151513;
+    color: #FEFEFC;
+    border-radius: 14px 14px 4px 14px;
+    padding: 10px 16px;
+    font-size: 12px;
+    max-width: 210px;
+    word-break: break-word;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.talkwithai-inputbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: #FEFEFC;
+    border-top: 1px solid #F0F0ED;
+    flex-shrink: 0;
+    margin-top: auto; /* 推到底部 */
+}
+
+.talkwithai-inputbar input {
+    flex: 1;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 15px;
+    outline: none;
+    background: #F7F7F5;
+    color: #151513;
+}
+
+.talkwithai-send-btn {
+    background: #151513;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s;
+}
+.talkwithai-send-btn img {
+    width: 20px;
+    height: 20px;
+    filter: invert(1);
+}
+.talkwithai-send-btn:hover {
+    background: #232321;
+}
+
+.talkwithai-confirm-btn {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    outline: none;
+    padding: 0;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.talkwithai-confirm-btn img {
+    width: 80px;   /* 可根据需要调整图标大小 */
+    height: 80px;
+    display: block;
+}
+
+/* Start Chatbox styles */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+.window-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    height: 12px;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+}
+
+.window-control {
+    width: 12px;
+    height: 12px;
+    border-radius: 100px;
+    border: 0.5px solid rgba(0, 0, 0, 0.2);
+}
+
+.close-button {
+    background-color: #FF5F57;
+    cursor: pointer;
+}
+
+.minimize-button {
+    background-color: #FEBC2E;
+    cursor: pointer;
+}
+
+.zoom-button {
+    background-color: #28C840;
+    cursor: pointer;
+}
+
+.app-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 25px 0 12px 0; /* Increased top margin to create space for controls */
+    flex-shrink: 0; /* 防止压缩 */
+}
+
+.app-icon .clock-icon {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+
+.prompt-bar {
+    background-color: rgba(21, 21, 19, 0.08);
+    border-radius: 25px;
+    padding: 17px 15px 17px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 35px); /* Account for padding */
+    box-sizing: border-box;
+    margin: 0 auto 5px auto;
+}
+
+.prompt-text {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: rgba(21, 21, 19, 0.5);
+}
+
+.prompt-icons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.prompt-icon {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    object-fit: contain;
+}
+
+
+/* Task List Window */
+
+/* Task Card */
+
+.window-header {
+    position: relative;
+}
+.window-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px 0 18px;
+}
+
+.tasklist-window {
+    position: relative;
+}
+
+.chatbox_icon-outer {
+    position: absolute;
+    top: -20px;   /* 距离卡片顶部的距离，可微调 */
+    right: 36px; /* 距离卡片右侧的距离，可微调 */
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    background: none;
+    /* 可选：加阴影或背景让图标更突出 */
+}
+
+.chatbox_icon-outer img {
+    width: 60px;
+    height: 60px;
+}
+
+.tasklist-card {
+    margin: 24px;
+    border-radius: 18px;
+    border: 2px dashed #15151344;
+    padding: 28px 28px 18px 28px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* Card Header */
+.tasklist-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 8px;
+}
+.chevron {
+    width: 24px;
+    height: 24px;
+    margin-top: 6px;
+}
+.task-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #151513;
+    flex: 1;
+    line-height: 1.1;
+}
+.task-time {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 1rem;
+    color: #151513;
+    min-width: 90px;
+}
+.clock-icon {
+    width: 22px;
+    height: 22px;
+    margin-top: 2px;
+}
+
+/* Task Items */
+.tasklist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 12px;
+}
+.tasklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: #151513;
+}
+.task-icon {
+    width: 26px;
+    height: 26px;
+}
+.task-desc {
+    flex: 1;
+}
+.task-item-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1rem;
+    color: #151513;
+}
+
+.tasklist-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* 视口高度 */
+    background-color: #f5f5f7;
+    position: relative;
+}
+
+#tasklistContainer {
+    flex: 1; /* 占用剩余所有空间 */
+    overflow-y: auto; /* 启用垂直滚动 */
+    padding: 15px;
+}
+
+/* 美化滚动条 (适用于WebKit浏览器) */
+#tasklistContainer::-webkit-scrollbar {
+    width: 8px;
+}
+
+#tasklistContainer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#tasklistContainer::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+#tasklistContainer::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Progress Bar */
+.tasklist-progress {
+    margin-top: 18px;
+}
+.progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: #f3eafd;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+.progress-bar-fg {
+    height: 100%;
+    background: #bfa6f2;
+    border-radius: 6px 0 0 6px;
+}
+.progress-label {
+    text-align: right;
+    font-size: 1rem;
+    color: #151513;
+    margin-top: 2px;
+}

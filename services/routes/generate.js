@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
-const { getProvider } = require("../services/ai/registry");
+const { getProvider } = require("../ai/registry"); // Adjust the path as necessary
 // const requireAuth = require("../middleware/auth");
 
 const prisma = new PrismaClient();
