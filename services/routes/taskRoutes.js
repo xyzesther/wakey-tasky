@@ -249,6 +249,21 @@ router.patch('/subtasks/:id/status', async (req, res) => {
       });
     }
 
+    // Get the current subtask to check its previous status
+    const currentSubtask = await prisma.subtask.findUnique({
+      where: { id },
+      include: {
+        task: true
+      }
+    });
+
+    if (!currentSubtask) {
+      return res.status(404).json({
+        success: false,
+        error: 'Subtask Not Found'
+      });
+    }
+
     // Update the subtask's status
     const updatedSubtask = await prisma.subtask.update({
       where: { id },
@@ -262,21 +277,52 @@ router.patch('/subtasks/:id/status', async (req, res) => {
       }
     });
 
-    // Check if all subtasks are now COMPLETED
     const { task } = updatedSubtask;
-    const allCompleted = task.subtasks.every(s => s.status === 'COMPLETED');
+    
+    // Check if we need to update the main task status
+    let mainTaskUpdated = false;
 
-    if (allCompleted && task.status !== 'COMPLETED') {
+    // If subtask changed from PENDING to IN_PROGRESS and main task is not IN_PROGRESS
+    if (currentSubtask.status === 'PENDING' && 
+        status === 'IN_PROGRESS' && 
+        task.status !== 'IN_PROGRESS') {
+      
       await prisma.mainTask.update({
         where: { id: task.id },
-        data: { status: 'COMPLETED' }
+        data: { status: 'IN_PROGRESS' }
+      });
+      mainTaskUpdated = true;
+    }
+    // Check if all subtasks are now COMPLETED
+    else if (status === 'COMPLETED') {
+      const allCompleted = task.subtasks.every(s => 
+        s.id === id ? status === 'COMPLETED' : s.status === 'COMPLETED'
+      );
+
+      if (allCompleted && task.status !== 'COMPLETED') {
+        await prisma.mainTask.update({
+          where: { id: task.id },
+          data: { status: 'COMPLETED' }
+        });
+        mainTaskUpdated = true;
+      }
+    }
+
+    // Fetch the updated main task if it was modified
+    let updatedMainTask = null;
+    if (mainTaskUpdated) {
+      updatedMainTask = await prisma.mainTask.findUnique({
+        where: { id: task.id },
+        include: { subtasks: true }
       });
     }
 
     res.json({
       success: true,
       message: 'Subtask status updated',
-      data: updatedSubtask
+      data: updatedSubtask,
+      mainTaskUpdated: mainTaskUpdated,
+      updatedMainTask: updatedMainTask
     });
 
   } catch (error) {
