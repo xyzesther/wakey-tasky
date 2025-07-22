@@ -445,7 +445,7 @@ New styles for Talk with AI feature
     display: flex;
     flex-direction: column;
     gap: 18px;
-    max-height: calc(100% - 120px); /* 减去其他元素的高度 */
+    max-height: calc(100% - 120px); 
 }
 
 .ai-bubble, .user-bubble {

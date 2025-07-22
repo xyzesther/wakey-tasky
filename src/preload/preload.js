@@ -239,6 +239,9 @@ const api = {
             return { success: false, error: error.message };
         }
     },
+
+    openPomodoro: (subtaskId, title, duration) => ipcRenderer.invoke('open-pomodoro', subtaskId, title, duration),
+    completeSubtask: (subtaskId) => ipcRenderer.invoke('complete-subtask', subtaskId),
 };
 
 // Expose the API
