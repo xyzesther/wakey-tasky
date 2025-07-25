@@ -308,8 +308,7 @@ ipcMain.handle('open-pomodoro', (event, subtaskId, title, duration) => {
         pomodoroWindow.webContents.send('pomodoro-data', {
             subtaskId,
             title,
-            duration,
-            mainTaskTitle
+            duration
         });
         pomodoroWindow.show();
         pomodoroWindow.focus();

@@ -12,11 +12,10 @@ function getQueryParams() {
 
 const params = getQueryParams();
 const subtaskId = params.subtaskId;
-const mainTaskTitle = params.mainTaskTitle || 'Main Task';
 const subtaskTitle = params.title || 'Subtask';
 const subtaskDuration = parseInt(params.duration, 10) || 25; // in minutes
 
-console.log('Parsed params:', { subtaskId, subtaskTitle, subtaskDuration, mainTaskTitle });
+console.log('Parsed params:', { subtaskId, subtaskTitle, subtaskDuration });
 
 // Timer variables
 let timeLeft = subtaskDuration * 60; // seconds

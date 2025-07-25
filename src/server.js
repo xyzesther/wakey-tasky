@@ -3,7 +3,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const { PrismaClient } = require("@prisma/client");
 const taskApi = require("../services/routes/taskRoutes"); 
-const generateRoutes = require("../services/routes/generate"); // Adjust the path as necessary
 require("dotenv").config();
 
 const app = express();
@@ -30,7 +29,6 @@ app.use(express.static("public"));
 
 // API Routes
 app.use("/api", taskApi);
-app.use("/api/generate", generateRoutes); // Add the new route here
 
 // Start server with database check
 async function startServer() {

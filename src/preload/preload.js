@@ -169,13 +169,13 @@ const api = {
     sendAIMessage: async (message) => {
         console.log('sendAIMessage called with message:', message);
         try {
-            const response = await fetch('http://localhost:3000/api/generate', {
+            const response = await fetch('http://localhost:3000/api/generate-task', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ 
-                    prompt: message,
+                    text: message
                 }),
             });
             
