@@ -417,7 +417,7 @@ function editSubtask(taskId, subtaskId, subtask) {
 function startSubtask(taskId, subtaskId, subtask) {
     console.log('Starting subtask:', subtaskId, subtask);
     if (window.api && window.api.openPomodoro) {
-        window.api.openPomodoro(subtaskId, subtask.title, subtask.duration, task.title);
+        window.api.openPomodoro(subtaskId, subtask.title, subtask.duration || 30);
     } else {
         alert('Pomodoro integration not available.');
     }
