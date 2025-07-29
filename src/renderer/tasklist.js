@@ -1,4 +1,4 @@
-// 全局变量跟踪当前加载的任务
+// ===== 应用初始化 =====
 let currentTasks = [];
 
 // 页面加载时获取任务数据
@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(loadTasks, 60000);
 });
 
+
+// ===== 窗口控制 =====【！！后期应该并入utils！！】
 // 设置窗口控制按钮事件
 function setupWindowControls() {
     // 关闭按钮
@@ -34,6 +36,7 @@ function setupWindowControls() {
     }
 }
 
+// ===== 数据管理 =====
 // 加载任务数据
 async function loadTasks() {
     const loadingIndicator = document.getElementById('loadingIndicator');
@@ -82,6 +85,8 @@ async function loadTasks() {
     }
 }
 
+
+// ===== UI渲染 =====
 // 渲染任务列表
 function renderTaskList(tasks) {
     const tasklistContainer = document.getElementById('tasklistContainer');
@@ -290,7 +295,8 @@ function createTaskCard(task) {
     return card;
 }
 
-// 格式化持续时间显示
+// ===== 工具函数 =====
+// 1. 格式化持续时间显示
 function formatDuration(minutes) {
     if (minutes >= 60) {
         const hours = Math.floor(minutes / 60);
@@ -300,7 +306,7 @@ function formatDuration(minutes) {
     return `${minutes}m`;
 }
 
-// 根据时长生成番茄时钟图标
+// 2. 根据时长生成番茄时钟图标
 function generateTomatoIcons(durationMinutes) {
     // 确保时间不超过2小时（120分钟）
     const cappedDuration = Math.min(durationMinutes, 120);
@@ -329,6 +335,7 @@ function generateTomatoIcons(durationMinutes) {
     return icons;
 }
 
+// ===== 状态管理 =====
 // 切换子任务状态
 async function toggleSubtaskStatus(taskId, subtaskId, currentStatus) {
     try {
@@ -363,6 +370,8 @@ async function toggleSubtaskStatus(taskId, subtaskId, currentStatus) {
     }
 }
 
+
+// ===== 交互处理 =====
 // 设置子任务悬停事件
 function setupSubtaskHoverEvents(taskItem, subtask, task) {
     const content = taskItem.querySelector('.subtask-content');
@@ -423,63 +432,132 @@ function startSubtask(taskId, subtaskId, subtask) {
     }
 }
 
-// 创建编辑模态框
+// ===== 模态框管理 =====
 function createEditModal(subtask, onSave) {
     const modal = document.createElement('div');
     modal.className = 'edit-modal-overlay';
     
+    // 初始化模态框内部状态
+    let currentDuration = subtask.duration || 30;
+    let currentTitle = subtask.title;
+    
+    // 生成初始番茄钟图标
+    const generateModalTomatoIcons = (duration) => {
+        return generateTomatoIcons(duration);
+    };
+    
     modal.innerHTML = `
         <div class="edit-modal">
-            <div class="edit-modal-header">
-                <h3>编辑子任务</h3>
-                <button class="modal-close-btn">&times;</button>
+            <!-- 任务标题输入 -->
+            <input type="text" class="task-title-input" value="${currentTitle}" placeholder="任务标题" />
+            
+            <!-- 当前状态显示 -->
+            <div class="current-status">Current: ${formatDuration(currentDuration)}</div>
+            
+            <!-- 番茄钟图标显示区域 -->
+            <div class="tomato-display">
+                ${generateModalTomatoIcons(currentDuration)}
             </div>
-            <div class="edit-modal-body">
-                <div class="form-group">
-                    <label for="subtask-title">任务标题</label>
-                    <input type="text" id="subtask-title" value="${subtask.title}" />
-                </div>
-                <div class="form-group">
-                    <label for="subtask-duration">预计时长（分钟）</label>
-                    <input type="number" id="subtask-duration" value="${subtask.duration || 30}" min="5" max="120" />
-                </div>
-                <div class="form-group">
-                    <label for="subtask-description">描述（可选）</label>
-                    <textarea id="subtask-description" rows="3">${subtask.description || ''}</textarea>
-                </div>
+            
+            <!-- 时长控制器 -->
+            <div class="duration-controller">
+                <button class="duration-btn minus-btn" ${currentDuration <= 15 ? 'disabled' : ''}>−</button>
+                <span class="duration-display">${formatDuration(currentDuration)}</span>
+                <button class="duration-btn plus-btn" ${currentDuration >= 120 ? 'disabled' : ''}>+</button>
             </div>
-            <div class="edit-modal-footer">
-                <button class="modal-btn cancel-btn">取消</button>
-                <button class="modal-btn save-btn">保存</button>
+            
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <button class="modal-action-btn cancel-btn">
+                    <span class="btn-icon">❌</span>
+                    <span class="btn-text">Cancel</span>
+                </button>
+                <button class="modal-action-btn confirm-btn">
+                    <span class="btn-icon">✅</span>
+                    <span class="btn-text">Confirm</span>
+                </button>
             </div>
         </div>
     `;
     
-    // 事件监听器
-    const closeBtn = modal.querySelector('.modal-close-btn');
+    // 获取控制元素
+    const titleInput = modal.querySelector('.task-title-input');
+    const currentStatusEl = modal.querySelector('.current-status');
+    const tomatoDisplayEl = modal.querySelector('.tomato-display');
+    const durationDisplayEl = modal.querySelector('.duration-display');
+    const minusBtn = modal.querySelector('.minus-btn');
+    const plusBtn = modal.querySelector('.plus-btn');
     const cancelBtn = modal.querySelector('.cancel-btn');
-    const saveBtn = modal.querySelector('.save-btn');
+    const confirmBtn = modal.querySelector('.confirm-btn');
     
-    const closeModal = () => {
-        document.body.removeChild(modal);
+    // 更新显示的函数
+    const updateDisplay = () => {
+        // 更新状态显示
+        currentStatusEl.textContent = `Current: ${formatDuration(currentDuration)}`;
+        
+        // 更新时长显示
+        durationDisplayEl.textContent = formatDuration(currentDuration);
+        
+        // 更新番茄钟图标
+        tomatoDisplayEl.innerHTML = generateModalTomatoIcons(currentDuration);
+        
+        // 更新按钮状态
+        minusBtn.disabled = currentDuration <= 15;
+        plusBtn.disabled = currentDuration >= 120;
+        
+        // 更新按钮样式
+        minusBtn.classList.toggle('disabled', currentDuration <= 15);
+        plusBtn.classList.toggle('disabled', currentDuration >= 120);
     };
     
-    closeBtn.addEventListener('click', closeModal);
+    // 减少时长事件
+    minusBtn.addEventListener('click', () => {
+        if (currentDuration > 15) {
+            currentDuration = Math.max(15, currentDuration - 15);
+            updateDisplay();
+        }
+    });
+    
+    // 增加时长事件
+    plusBtn.addEventListener('click', () => {
+        if (currentDuration < 120) {
+            currentDuration = Math.min(120, currentDuration + 15);
+            updateDisplay();
+        }
+    });
+    
+    // 标题输入事件
+    titleInput.addEventListener('input', (e) => {
+        currentTitle = e.target.value;
+    });
+    
+    // 关闭模态框函数
+    const closeModal = () => {
+        if (document.body.contains(modal)) {
+            document.body.removeChild(modal);
+        }
+    };
+    
+    // 取消按钮事件
     cancelBtn.addEventListener('click', closeModal);
     
-    saveBtn.addEventListener('click', () => {
+    // 确认按钮事件
+    confirmBtn.addEventListener('click', () => {
+        const trimmedTitle = currentTitle.trim();
+        
+        if (!trimmedTitle) {
+            alert('请输入任务标题');
+            titleInput.focus();
+            return;
+        }
+        
         const updatedData = {
-            title: modal.querySelector('#subtask-title').value.trim(),
-            duration: parseInt(modal.querySelector('#subtask-duration').value),
-            description: modal.querySelector('#subtask-description').value.trim()
+            title: trimmedTitle,
+            duration: currentDuration
         };
         
-        if (updatedData.title) {
-            onSave(updatedData);
-            closeModal();
-        } else {
-            alert('请输入任务标题');
-        }
+        onSave(updatedData);
+        closeModal();
     });
     
     // 点击背景关闭
@@ -489,9 +567,26 @@ function createEditModal(subtask, onSave) {
         }
     });
     
+    // 键盘事件支持
+    modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        } else if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            confirmBtn.click();
+        }
+    });
+    
+    // 聚焦到标题输入框
+    setTimeout(() => {
+        titleInput.focus();
+        titleInput.select();
+    }, 100);
+    
     return modal;
 }
 
+// ===== 数据更新 =====
 // 更新子任务数据
 async function updateSubtaskData(taskId, subtaskId, updatedData) {
     try {
