@@ -433,6 +433,7 @@ function startSubtask(taskId, subtaskId, subtask) {
 }
 
 // ===== 模态框管理 =====
+// ===== 模态框管理 =====
 function createEditModal(subtask, onSave) {
     const modal = document.createElement('div');
     modal.className = 'edit-modal-overlay';
@@ -440,31 +441,59 @@ function createEditModal(subtask, onSave) {
     modal.innerHTML = `
         <div class="edit-modal">
             <div class="edit-modal-header">
-                <h3>编辑子任务</h3>
+                <h3>editing</h3>
                 <button class="modal-close-btn">&times;</button>
             </div>
             <div class="edit-modal-body">
                 <div class="form-group">
-                    <label for="subtask-title">任务标题</label>
-                    <input type="text" id="subtask-title" value="${subtask.title}" />
+                    <label for="subtask-title">Task Content</label>
+                    <textarea id="subtask-title" rows="2">${subtask.title}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="subtask-duration">预计时长（分钟）</label>
-                    <input type="number" id="subtask-duration" value="${subtask.duration || 30}" min="5" max="120" />
+                    <label>Estimated Duration</label>
+                    <div class="duration-control">
+                        <button type="button" class="duration-btn decrease-btn">-</button>
+                        <span class="duration-display">${subtask.duration || 30} min</span>
+                        <button type="button" class="duration-btn increase-btn">+</button>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="subtask-description">描述（可选）</label>
+                    <label for="subtask-description">Description (optional)</label>
                     <textarea id="subtask-description" rows="3">${subtask.description || ''}</textarea>
                 </div>
             </div>
             <div class="edit-modal-footer">
-                <button class="modal-btn cancel-btn">取消</button>
-                <button class="modal-btn save-btn">保存</button>
+                <button class="modal-btn cancel-btn">
+                    <img src="./assets/cancel.svg" alt="Cancel" />
+                </button>
+                <button class="modal-btn save-btn">
+                    <img src="./assets/confirm.svg" alt="Confirm" />
+                </button>
             </div>
         </div>
     `;
     
-    // 事件监听器
+    // 获取duration控制元素
+    const durationDisplay = modal.querySelector('.duration-display');
+    const decreaseBtn = modal.querySelector('.decrease-btn');
+    const increaseBtn = modal.querySelector('.increase-btn');
+    
+    // 设置初始值
+    let currentDuration = subtask.duration || 30;
+    
+    // 减少15分钟按钮事件
+    decreaseBtn.addEventListener('click', () => {
+        currentDuration = Math.max(15, currentDuration - 15); // 最小值15分钟
+        durationDisplay.textContent = `${currentDuration} min`;
+    });
+    
+    // 增加15分钟按钮事件
+    increaseBtn.addEventListener('click', () => {
+        currentDuration = Math.min(120, currentDuration + 15); // 最大值120分钟
+        durationDisplay.textContent = `${currentDuration} min`;
+    });
+    
+    // 其他事件监听器
     const closeBtn = modal.querySelector('.modal-close-btn');
     const cancelBtn = modal.querySelector('.cancel-btn');
     const saveBtn = modal.querySelector('.save-btn');
@@ -479,7 +508,7 @@ function createEditModal(subtask, onSave) {
     saveBtn.addEventListener('click', () => {
         const updatedData = {
             title: modal.querySelector('#subtask-title').value.trim(),
-            duration: parseInt(modal.querySelector('#subtask-duration').value),
+            duration: currentDuration, // 使用当前duration值
             description: modal.querySelector('#subtask-description').value.trim()
         };
         

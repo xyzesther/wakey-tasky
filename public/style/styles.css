@@ -1122,9 +1122,10 @@ body {
 }
 
 .modal-btn {
-    padding: 8px 16px;
+    height:fit-content;
+    width:fit-content;
     border: none;
-    border-radius: 6px;
+    border-radius: 30px;
     font-size: 14px;
     cursor: pointer;
     font-family: 'Manrope', sans-serif;
@@ -1132,9 +1133,8 @@ body {
 }
 
 .cancel-btn {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
+    background-color:transparent;
+    color: #ffffff;
 }
 
 .cancel-btn:hover {
@@ -1142,12 +1142,12 @@ body {
 }
 
 .save-btn {
-    background-color: #0084ff;
+    background-color: transparent;
     color: white;
 }
 
 .save-btn:hover {
-    background-color: #0056b3;
+    background-color: #e9ecef;
 }
 
 /* 任务列表容器样式 */
@@ -1520,132 +1520,9 @@ body {
     }
 }
 
-/* 编辑模态框样式（保持不变） */
-.edit-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
 
-.edit-modal {
-    background: white;
-    border-radius: 12px;
-    width: 400px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
 
-.edit-modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
 
-.edit-modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    color: #333;
-}
-
-.modal-close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-close-btn:hover {
-    color: #666;
-}
-
-.edit-modal-body {
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: #555;
-    font-weight: 500;
-}
-
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    font-family: 'Manrope', sans-serif;
-    box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #0084ff;
-    box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.1);
-}
-
-.edit-modal-footer {
-    padding: 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.modal-btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    font-family: 'Manrope', sans-serif;
-    transition: all 0.2s ease;
-}
-
-.cancel-btn {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
-}
-
-.cancel-btn:hover {
-    background-color: #e9ecef;
-}
-
-.save-btn {
-    background-color: #0084ff;
-    color: white;
-}
-
-.save-btn:hover {
-    background-color: #0056b3;
-}
 
 /* Pomodoro Timer Styles */
 .pomodoro-container {
