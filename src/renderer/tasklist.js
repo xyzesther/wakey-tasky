@@ -437,127 +437,58 @@ function createEditModal(subtask, onSave) {
     const modal = document.createElement('div');
     modal.className = 'edit-modal-overlay';
     
-    // 初始化模态框内部状态
-    let currentDuration = subtask.duration || 30;
-    let currentTitle = subtask.title;
-    
-    // 生成初始番茄钟图标
-    const generateModalTomatoIcons = (duration) => {
-        return generateTomatoIcons(duration);
-    };
-    
     modal.innerHTML = `
         <div class="edit-modal">
-            <!-- 任务标题输入 -->
-            <input type="text" class="task-title-input" value="${currentTitle}" placeholder="任务标题" />
-            
-            <!-- 当前状态显示 -->
-            <div class="current-status">Current: ${formatDuration(currentDuration)}</div>
-            
-            <!-- 番茄钟图标显示区域 -->
-            <div class="tomato-display">
-                ${generateModalTomatoIcons(currentDuration)}
+            <div class="edit-modal-header">
+                <h3>编辑子任务</h3>
+                <button class="modal-close-btn">&times;</button>
             </div>
-            
-            <!-- 时长控制器 -->
-            <div class="duration-controller">
-                <button class="duration-btn minus-btn" ${currentDuration <= 15 ? 'disabled' : ''}>−</button>
-                <span class="duration-display">${formatDuration(currentDuration)}</span>
-                <button class="duration-btn plus-btn" ${currentDuration >= 120 ? 'disabled' : ''}>+</button>
+            <div class="edit-modal-body">
+                <div class="form-group">
+                    <label for="subtask-title">任务标题</label>
+                    <input type="text" id="subtask-title" value="${subtask.title}" />
+                </div>
+                <div class="form-group">
+                    <label for="subtask-duration">预计时长（分钟）</label>
+                    <input type="number" id="subtask-duration" value="${subtask.duration || 30}" min="5" max="120" />
+                </div>
+                <div class="form-group">
+                    <label for="subtask-description">描述（可选）</label>
+                    <textarea id="subtask-description" rows="3">${subtask.description || ''}</textarea>
+                </div>
             </div>
-            
-            <!-- 操作按钮 -->
-            <div class="action-buttons">
-                <button class="modal-action-btn cancel-btn">
-                    <span class="btn-icon">❌</span>
-                    <span class="btn-text">Cancel</span>
-                </button>
-                <button class="modal-action-btn confirm-btn">
-                    <span class="btn-icon">✅</span>
-                    <span class="btn-text">Confirm</span>
-                </button>
+            <div class="edit-modal-footer">
+                <button class="modal-btn cancel-btn">取消</button>
+                <button class="modal-btn save-btn">保存</button>
             </div>
         </div>
     `;
     
-    // 获取控制元素
-    const titleInput = modal.querySelector('.task-title-input');
-    const currentStatusEl = modal.querySelector('.current-status');
-    const tomatoDisplayEl = modal.querySelector('.tomato-display');
-    const durationDisplayEl = modal.querySelector('.duration-display');
-    const minusBtn = modal.querySelector('.minus-btn');
-    const plusBtn = modal.querySelector('.plus-btn');
+    // 事件监听器
+    const closeBtn = modal.querySelector('.modal-close-btn');
     const cancelBtn = modal.querySelector('.cancel-btn');
-    const confirmBtn = modal.querySelector('.confirm-btn');
+    const saveBtn = modal.querySelector('.save-btn');
     
-    // 更新显示的函数
-    const updateDisplay = () => {
-        // 更新状态显示
-        currentStatusEl.textContent = `Current: ${formatDuration(currentDuration)}`;
-        
-        // 更新时长显示
-        durationDisplayEl.textContent = formatDuration(currentDuration);
-        
-        // 更新番茄钟图标
-        tomatoDisplayEl.innerHTML = generateModalTomatoIcons(currentDuration);
-        
-        // 更新按钮状态
-        minusBtn.disabled = currentDuration <= 15;
-        plusBtn.disabled = currentDuration >= 120;
-        
-        // 更新按钮样式
-        minusBtn.classList.toggle('disabled', currentDuration <= 15);
-        plusBtn.classList.toggle('disabled', currentDuration >= 120);
-    };
-    
-    // 减少时长事件
-    minusBtn.addEventListener('click', () => {
-        if (currentDuration > 15) {
-            currentDuration = Math.max(15, currentDuration - 15);
-            updateDisplay();
-        }
-    });
-    
-    // 增加时长事件
-    plusBtn.addEventListener('click', () => {
-        if (currentDuration < 120) {
-            currentDuration = Math.min(120, currentDuration + 15);
-            updateDisplay();
-        }
-    });
-    
-    // 标题输入事件
-    titleInput.addEventListener('input', (e) => {
-        currentTitle = e.target.value;
-    });
-    
-    // 关闭模态框函数
     const closeModal = () => {
-        if (document.body.contains(modal)) {
-            document.body.removeChild(modal);
-        }
+        document.body.removeChild(modal);
     };
     
-    // 取消按钮事件
+    closeBtn.addEventListener('click', closeModal);
     cancelBtn.addEventListener('click', closeModal);
     
-    // 确认按钮事件
-    confirmBtn.addEventListener('click', () => {
-        const trimmedTitle = currentTitle.trim();
-        
-        if (!trimmedTitle) {
-            alert('请输入任务标题');
-            titleInput.focus();
-            return;
-        }
-        
+    saveBtn.addEventListener('click', () => {
         const updatedData = {
-            title: trimmedTitle,
-            duration: currentDuration
+            title: modal.querySelector('#subtask-title').value.trim(),
+            duration: parseInt(modal.querySelector('#subtask-duration').value),
+            description: modal.querySelector('#subtask-description').value.trim()
         };
         
-        onSave(updatedData);
-        closeModal();
+        if (updatedData.title) {
+            onSave(updatedData);
+            closeModal();
+        } else {
+            alert('请输入任务标题');
+        }
     });
     
     // 点击背景关闭
@@ -566,22 +497,6 @@ function createEditModal(subtask, onSave) {
             closeModal();
         }
     });
-    
-    // 键盘事件支持
-    modal.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-        } else if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            confirmBtn.click();
-        }
-    });
-    
-    // 聚焦到标题输入框
-    setTimeout(() => {
-        titleInput.focus();
-        titleInput.select();
-    }, 100);
     
     return modal;
 }
