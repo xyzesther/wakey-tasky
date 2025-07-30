@@ -165,22 +165,11 @@ ipcMain.handle('resize-window', (event, { width, height }) => {
 });
 
 // Handle IPC for window dragging
-ipcMain.on('window-drag-start', () => {
-    if (mainWindow) {
-        mainWindow.webContents.send('window-drag-enabled');
-    }
-});
-
-ipcMain.on('window-drag', (event, { mouseX, mouseY }) => {
-    if (mainWindow) {
-        const { x, y } = mainWindow.getPosition();
-        mainWindow.setPosition(x + mouseX, y + mouseY);
-    }
-});
-
-ipcMain.on('window-drag-end', () => {
-    if (mainWindow) {
-        mainWindow.webContents.send('window-drag-disabled');
+ipcMain.on('drag-window', (event, { deltaX, deltaY }) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win && !win.isDestroyed()) {
+        const [x, y] = win.getPosition();
+        win.setPosition(x + deltaX, y + deltaY);
     }
 });
 
@@ -199,11 +188,18 @@ ipcMain.handle('open-chatbox', (event) => {
 ipcMain.on('close-window', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) {
-        if (mainWindow) {
-            mainWindow.show();
+        // If closing chat or tasklist, show the main icon window
+        if (win === chatboxWindow || win === taskListWindow) {
+            if (mainWindow) {
+                mainWindow.show();
+            }
+            win.close();
+        } else if (win === mainWindow) {
+            // If closing the main icon window, quit the app
+            app.quit();
+        } else {
+            win.close();
         }
-        
-        win.close();
     }
 });
 
@@ -213,54 +209,6 @@ ipcMain.on('minimize-window', (event) => {
         win.minimize();
     }
 });
-
-ipcMain.on('open-task-list', () => {
-    // If main window is not open, create it
-    if (!mainWindow) {
-        createMainWindow();
-    } else {
-        // Make sure main window is visible
-        mainWindow.show();
-    }
-    
-    // Show task list in main window
-    mainWindow.webContents.send('show-task-list');
-    mainWindow.focus();
-    
-    // Hide chatbox if it exists (don't close it)
-    if (chatboxWindow) {
-        chatboxWindow.close();
-    }
-});
-
-ipcMain.on('open-task-creation', () => {
-    // If main window is not open, create it
-    if (!mainWindow) {
-        createMainWindow();
-    } else {
-        // Make sure main window is visible
-        mainWindow.show();
-    }
-    
-    // Show task creation in main window
-    mainWindow.webContents.send('show-task-creation');
-    mainWindow.focus();
-    
-    // Hide chatbox if it exists (don't close it)
-    if (chatboxWindow) {
-        chatboxWindow.close();
-    }
-});
-
-// // IPC handler to open the Talk with AI view
-// ipcMain.handle('open-talkwithai', () => {
-//     const filePath = path.join(__dirname, '../../public/talkwithai.html');
-//     console.log('main open-talkwithai, loading:', filePath);
-//     if (chatboxWindow) {
-//         chatboxWindow.loadFile(filePath);
-//         chatboxWindow.setSize(350, 480); // Set size for Talk with AI view
-//     }
-// });
 
 // IPC handler to open the Task List window
 ipcMain.handle('open-tasklist-window', () => {
