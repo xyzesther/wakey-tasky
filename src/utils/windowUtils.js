@@ -2,7 +2,6 @@
 const chatCloseButton = document.getElementById('chatCloseButton');
 const chatMinimizeButton = document.getElementById('chatMinimizeButton');
 const chatBoxContainer = document.querySelector('.chatbox-container') || 
-                //   document.querySelector('.talkwithai-container') ||
                   document.querySelector('.tasklist-container');
 
 // Add drag functionality
