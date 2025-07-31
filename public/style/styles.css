@@ -170,6 +170,7 @@ body {
 
 /* State 3: Task List */
 .task-list-container {
+    -webkit-app-region:drag;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -313,6 +314,7 @@ body {
 
 /* Add these styles for the chatbox interface */
 .chatbox-container {
+    -webkit-app-region: drag;
     position: relative;
     width: 350px;
     height: 280px;
@@ -324,87 +326,6 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.window-controls {
-    position:absolute;
-    top: 12px;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    padding: 0px 8px;
-    height: 12px;
-    z-index:1000;
-}
-
-.window-control {
-    width: 12px;
-    height: 12px;
-    border-radius: 100px;
-    border: 0.5px solid rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-}
-
-.close-button {
-    background-color: #FF5F57;
-    cursor: pointer;
-}
-
-.minimize-button {
-    background-color: #FEBC2E;
-    cursor: pointer;
-}
-
-.zoom-button {
-    background-color: #28C840;
-    cursor: pointer;
-}
-
-.app-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 10px 0;
-    flex-shrink: 0; /* 防止压缩 */
-}
-
-.app-icon .clock-icon {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
-}
-
-.prompt-bar {
-    background-color: rgba(21, 21, 19, 0.08);
-    border-radius: 25px;
-    padding: 17px 15px 17px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: calc(100% - 35px); /* Account for padding */
-    box-sizing: border-box;
-    margin: 0 auto 5px auto;
-}
-
-.prompt-text {
-    font-family: 'Manrope', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    color: rgba(21, 21, 19, 0.5);
-}
-
-.prompt-icons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.prompt-icon {
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-    object-fit: contain;
-}
 
 New styles for Talk with AI feature
 .talkwithai-container {
@@ -572,35 +493,32 @@ body {
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    padding: 0;
-    height: 12px;
+    /* 关键修改：使用 padding 扩大可点击区域，而不是固定 height */
+    padding: 8px; 
     position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 10;
+    top: 4px;  /* 调整位置以适应 padding */
+    left: 4px; /* 调整位置以适应 padding */
+    z-index: 9999; /* 大幅提高 z-index，确保在最顶层 */
+    border-radius: 10px; /* 可选：为容器增加圆角，视觉上更统一 */
 }
 
 .window-control {
+    -webkit-app-region: no-drag; /* 明确按钮本身不可拖拽，这样才能点击 */
     width: 12px;
     height: 12px;
     border-radius: 100px;
     border: 0.5px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer; /* 将 cursor 移到通用类中 */
 }
 
 .close-button {
     background-color: #FF5F57;
-    cursor: pointer;
 }
 
 .minimize-button {
     background-color: #FEBC2E;
-    cursor: pointer;
 }
 
-.zoom-button {
-    background-color: #28C840;
-    cursor: pointer;
-}
 
 .app-icon {
     display: flex;
@@ -922,11 +840,16 @@ body {
 }
 
 .start-btn {
-    background-color: #000;
+    /* 让按钮大小完全由SVG决定 */
+    width: 36px;
+    height: 36px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+
 }
 
 .start-btn:hover {
-    background-color: #333;
+    background-color: #e9ecef;
     transform: scale(1.05);
 }
 
@@ -984,7 +907,7 @@ body {
     text-align: right;
 }
 
-/* 加载和空状态样式 */
+/* loading indicator and no tasks message */
 .loading-indicator,
 .no-tasks-message {
     text-align: center;
@@ -1122,9 +1045,10 @@ body {
 }
 
 .modal-btn {
-    padding: 8px 16px;
+    height:fit-content;
+    width:fit-content;
     border: none;
-    border-radius: 6px;
+    border-radius: 30px;
     font-size: 14px;
     cursor: pointer;
     font-family: 'Manrope', sans-serif;
@@ -1132,9 +1056,8 @@ body {
 }
 
 .cancel-btn {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
+    background-color:transparent;
+    color: #ffffff;
 }
 
 .cancel-btn:hover {
@@ -1142,12 +1065,12 @@ body {
 }
 
 .save-btn {
-    background-color: #0084ff;
+    background-color: transparent;
     color: white;
 }
 
 .save-btn:hover {
-    background-color: #0056b3;
+    background-color: #e9ecef;
 }
 
 /* 任务列表容器样式 */
@@ -1166,7 +1089,6 @@ body {
     flex-shrink: 0;
     padding: 20px;
     border-bottom: 1px solid #e0e0e0;
-    background-color: #ffffff;
     z-index: 100;
     display: flex;
     align-items: center;
@@ -1520,132 +1442,9 @@ body {
     }
 }
 
-/* 编辑模态框样式（保持不变） */
-.edit-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
 
-.edit-modal {
-    background: white;
-    border-radius: 12px;
-    width: 400px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
 
-.edit-modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
 
-.edit-modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    color: #333;
-}
-
-.modal-close-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-close-btn:hover {
-    color: #666;
-}
-
-.edit-modal-body {
-    padding: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 14px;
-    color: #555;
-    font-weight: 500;
-}
-
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-    font-family: 'Manrope', sans-serif;
-    box-sizing: border-box;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #0084ff;
-    box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.1);
-}
-
-.edit-modal-footer {
-    padding: 20px;
-    border-top: 1px solid #eee;
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.modal-btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    font-family: 'Manrope', sans-serif;
-    transition: all 0.2s ease;
-}
-
-.cancel-btn {
-    background-color: #f8f9fa;
-    color: #6c757d;
-    border: 1px solid #dee2e6;
-}
-
-.cancel-btn:hover {
-    background-color: #e9ecef;
-}
-
-.save-btn {
-    background-color: #0084ff;
-    color: white;
-}
-
-.save-btn:hover {
-    background-color: #0056b3;
-}
 
 /* Pomodoro Timer Styles */
 .pomodoro-container {
