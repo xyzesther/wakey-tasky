@@ -445,15 +445,11 @@ New styles for Talk with AI feature
     cursor: pointer;
     display: flex;
     align-items: center;
-    transition: background 0.2s;
 }
 .talkwithai-send-btn img {
     width: 20px;
     height: 20px;
     filter: invert(1);
-}
-.talkwithai-send-btn:hover {
-    background: #232321;
 }
 
 .talkwithai-confirm-btn {

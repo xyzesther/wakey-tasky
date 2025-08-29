@@ -153,11 +153,6 @@ const api = {
         ipcRenderer.send('open-task-creation');
     },
     
-    // // Open Talk with AI window
-    // openTalkWithAI: () => {
-    //     console.log('preload openTalkWithAI');
-    //     return ipcRenderer.invoke('open-talkwithai');
-    // },
 
     // Open Task List Window
     openTaskListWindow: () => {
