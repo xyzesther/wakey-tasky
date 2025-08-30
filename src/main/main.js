@@ -128,7 +128,7 @@ function positionTaskListWindow() {
     const [width, height] = chatboxWindow.getSize();
     
     // 将任务列表窗口放在 chatbox 下方，保持 x 坐标一致
-    taskListWindow.setPosition(x, y + height + 10);
+    taskListWindow.setPosition(x + width + 2, y);
 }
 
 // ----------------------------------------------------------------------------
