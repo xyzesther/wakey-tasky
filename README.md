@@ -26,7 +26,7 @@ Create a `.env` file in the project root (it’s already in `.gitignore`):
 
 ```bash
 OPENAI_API_KEY="your_openai_api_key"
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="file:./dev.db"
 # Optional (defaults to 3000)
 PORT=3000
 ```
@@ -34,7 +34,7 @@ PORT=3000
 Initialize the database schema:
 
 ```bash
-npx prisma db push
+npx prisma migrate deploy
 ```
 
 ### Run
@@ -76,6 +76,7 @@ The Express server serves on `http://localhost:3000` by default.
 - `GET /api/tasks/:id`: fetch one task (includes subtasks)
 - `PATCH /api/tasks/:id/status`: update main task status (`PENDING|IN_PROGRESS|COMPLETED|CANCELLED`)
 - `PATCH /api/subtasks/:id/status`: update subtask status
+- `PATCH /api/subtasks/:id`: edit subtask title, description, or duration
 - `DELETE /api/tasks/:id`: delete a task and its subtasks
 
 ### Repo layout
@@ -90,7 +91,7 @@ The Express server serves on `http://localhost:3000` by default.
 
 ### Troubleshooting
 
-- **App fails on startup with “Missing OPENAI_API_KEY”**: add `OPENAI_API_KEY` to your `.env`.
+- **AI task generation reports “Missing OPENAI_API_KEY”**: add `OPENAI_API_KEY` to your `.env`.
 - **Server exits after “Database connection failed”**: check `DATABASE_URL` points to a writable path (recommended `file:./prisma/dev.db`).
 - **Port already in use**: set `PORT` in `.env` (and update any hard-coded clients if needed).
 

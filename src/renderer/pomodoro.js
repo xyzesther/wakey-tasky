@@ -59,7 +59,7 @@ function setupUI() {
                             </div>
                             <div class="completion-message">Well done! You finished the task!</div>
                         </div>
-                        <div class="task-description" id="taskDescription">${subtaskTitle}</div>
+                        <div class="task-description" id="taskDescription"></div>
                     </div>
                 </div>
             </div>
@@ -67,6 +67,8 @@ function setupUI() {
     `;
 
     console.log('Pill structure created! Real data:', { subtaskTitle, timeFormatted: formatTime(timeLeft) });
+
+    document.getElementById('taskDescription').textContent = subtaskTitle;
     
     // Hide loading container (if any)
     const loadingContainer = document.querySelector('.loading-container');
@@ -232,11 +234,27 @@ function updateProgress() {
     }
 }
 
-function completePomodoro() {
+async function completePomodoro() {
     console.log('Completing pomodoro for:', subtaskTitle);
     clearInterval(timer);
     running = false;
-    
+
+    if (!window.api?.completeSubtask || !subtaskId) {
+        showCompletionError('Unable to identify this subtask. Please return to the task list.');
+        return;
+    }
+
+    try {
+        const result = await window.api.completeSubtask(subtaskId);
+        if (!result?.success) {
+            throw new Error(result?.error || 'Unable to save completion');
+        }
+    } catch (error) {
+        console.error('Error completing subtask:', error);
+        showCompletionError(`Could not save completion: ${error.message}`);
+        return;
+    }
+
     const colorDot = document.getElementById('colorDot');
     const titleTime = document.getElementById('titleTime');
     const taskDescription = document.getElementById('taskDescription');
@@ -248,32 +266,15 @@ function completePomodoro() {
     }
     if (titleTime) titleTime.classList.add('completed');
     if (taskDescription) taskDescription.classList.add('completed');
-    
-    // Complete the subtask in backend
-    if (window.api && window.api.completeSubtask && subtaskId) {
-        console.log('Calling completeSubtask API for:', subtaskId);
-        window.api.completeSubtask(subtaskId).then((result) => {
-            console.log('CompleteSubtask result:', result);
-            setTimeout(() => {
-                if (window.close) {
-                    window.close();
-                }
-            }, 3000);
-        }).catch(error => {
-            console.error('Error completing subtask:', error);
-            setTimeout(() => {
-                if (window.close) {
-                    window.close();
-                }
-            }, 3000);
-        });
-    } else {
-        console.log('API not available, closing window in 3 seconds...');
-        setTimeout(() => {
-            if (window.close) {
-                window.close();
-            }
-        }, 3000);
+
+    setTimeout(() => window.close(), 3000);
+}
+
+function showCompletionError(message) {
+    const description = document.getElementById('taskDescription');
+    if (description) {
+        description.textContent = message;
+        description.classList.add('error');
     }
 }
 

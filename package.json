@@ -10,7 +10,8 @@
 	"scripts": {
 		"dev": "nodemon --watch src --watch public --ext js,html,css --exec electron .",
 		"start": "electron .",
-		"server": "node src/server.js"
+		"server": "node src/server.js",
+		"test": "jest --runInBand --watchman=false"
 	},
 	"repository": {
 		"type": "git",

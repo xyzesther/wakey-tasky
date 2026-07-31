@@ -3,7 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 console.log('Preload script starting...');
 
 // Base URL for API calls
-const API_URL = 'http://localhost:3000';
+const API_PORT = process.env.PORT || 3000;
+const API_URL = `http://localhost:${API_PORT}`;
 
 // Define the real API
 const api = {
@@ -18,21 +19,17 @@ const api = {
     },
     
     // Window dragging support
-    startWindowDrag: () => {
-        ipcRenderer.send('window-drag-start');
+    startWindowDrag: () => true,
+    
+    dragWindow: (deltaX, deltaY) => {
+        ipcRenderer.send('window-drag', { deltaX, deltaY });
     },
     
-    dragWindow: (mouseX, mouseY) => {
-        ipcRenderer.send('window-drag', { mouseX, mouseY });
-    },
+    endWindowDrag: () => true,
     
-    endWindowDrag: () => {
-        ipcRenderer.send('window-drag-end');
-    },
-    
-    generateTask: async (text, startTime, endTime) => {
+    generateTask: async (text) => {
         try {
-            console.log(`Sending request to ${API_URL}/api/generate-task`, { text, startTime, endTime });
+            console.log(`Sending request to ${API_URL}/api/generate-task`, { text });
             
             const response = await fetch(`${API_URL}/api/generate-task`, {
                 method: 'POST',
@@ -40,7 +37,7 @@ const api = {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ text, startTime, endTime }),
+                body: JSON.stringify({ text }),
             });
             
             console.log('Response status:', response.status);
@@ -145,13 +142,15 @@ const api = {
     
     // Open task list view
     openTaskList: () => {
-        ipcRenderer.send('open-task-list');
+        return ipcRenderer.invoke('open-tasklist-window');
     },
     
     // Open task creation view
     openTaskCreation: () => {
-        ipcRenderer.send('open-task-creation');
+        return ipcRenderer.invoke('open-task-creation');
     },
+
+    openTalkWithAI: () => ipcRenderer.invoke('open-chatbox'),
     
 
     // Open Task List Window
@@ -164,7 +163,7 @@ const api = {
     sendAIMessage: async (message) => {
         console.log('sendAIMessage called with message:', message);
         try {
-            const response = await fetch('http://localhost:3000/api/generate-task', {
+            const response = await fetch(`${API_URL}/api/generate-task`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -175,8 +174,18 @@ const api = {
             });
             
             console.log('AI API response status:', response.status);
-            const data = await response.json();
+            const data = await response.json().catch(() => ({
+                success: false,
+                error: `Server error (${response.status})`
+            }));
             console.log('AI API response data:', data);
+
+            if (!response.ok || !data.success) {
+                return {
+                    success: false,
+                    error: data.error || `Server error (${response.status})`
+                };
+            }
             return data;
         } catch (error) {
             console.error('Error in sendAIMessage:', error);
@@ -184,9 +193,9 @@ const api = {
         }
     },
 
-    updateSubtaskStatus: async (taskId, subtaskId, newStatus) => {
+    updateSubtaskStatus: async (_taskId, subtaskId, newStatus) => {
         try {
-            const response = await fetch(`${API_URL}/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+            const response = await fetch(`${API_URL}/api/subtasks/${subtaskId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -194,14 +203,16 @@ const api = {
                 body: JSON.stringify({ status: newStatus }),
             });
             
-            if (!response.ok) {
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok || !data?.success) {
                 return { 
                     success: false, 
-                    error: `Server error (${response.status})` 
+                    error: data?.error || `Server error (${response.status})`
                 };
             }
             
-            return await response.json();
+            return data;
         } catch (error) {
             console.error('Error updating subtask status:', error);
             return { 
@@ -214,7 +225,7 @@ const api = {
     // update subtask
     updateSubtask: async (subtaskId, updatedData) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/subtasks/${subtaskId}`, {
+            const response = await fetch(`${API_URL}/api/subtasks/${subtaskId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -222,13 +233,14 @@ const api = {
                 body: JSON.stringify(updatedData),
             });
             
-            if (!response.ok) {
-                const errorText = await response.text();
-                return { success: false, error: `Server error (${response.status}): ${errorText}` };
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data?.success) {
+                return {
+                    success: false,
+                    error: data?.error || `Server error (${response.status})`
+                };
             }
-            
-            const data = await response.json();
-            return { success: true, data };
+            return data;
         } catch (error) {
             console.error('Error updating subtask:', error);
             return { success: false, error: error.message };
@@ -245,13 +257,13 @@ const api = {
             callback(data);
         });
     },
+    onTasksChanged: (callback) => {
+        ipcRenderer.on('tasks-changed', () => callback());
+    },
     completeSubtask: (subtaskId) => ipcRenderer.invoke('complete-subtask', subtaskId),
 };
 
 // Expose the API
 contextBridge.exposeInMainWorld('api', api);
-
-// check if the api methods are available
-console.log('API methods available:', Object.keys(window.api).join(', '));
 
 console.log('Preload script completed. API exposed:', Object.keys(api));

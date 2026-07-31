@@ -1,157 +1,114 @@
 const { PrismaClient } = require('@prisma/client');
 const express = require('express');
+const { generateTasksFromText } = require('../ai/taskGenerator');
+const {
+  TASK_STATUSES,
+  setSubtaskStatus,
+  updateSubtask
+} = require('../tasks/taskService');
+
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Import AI components
-const { getProvider } = require('../ai/registry');
-const { getTaskPrompt } = require('../ai/prompts/task');
-const { chat } = require('../ai/models/openai');
+function sendError(res, error, fallbackMessage) {
+  if (error.code === 'NOT_FOUND' || error.code === 'P2025') {
+    return res.status(404).json({ success: false, error: 'Task not found' });
+  }
+  if (error.code === 'INVALID_STATUS') {
+    return res.status(400).json({ success: false, error: error.message });
+  }
 
-// POST endpoint to generate tasks from user input using AI
+  console.error(fallbackMessage, error);
+  return res.status(500).json({
+    success: false,
+    error: fallbackMessage
+  });
+}
+
 router.post('/generate-task', async (req, res) => {
   try {
-    console.log('Received request body:', req.body);
     const { text, userId } = req.body;
 
-    if (!text) {
+    if (typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({
         success: false,
         error: 'Task text content is required'
       });
     }
 
-    // Use AI to generate tasks
-    const currentDateTime = new Date().toISOString();
-    const prompt = getTaskPrompt(text, currentDateTime);
-    
-    console.log('Calling AI with prompt:', prompt);
-    const aiResponse = await chat(prompt);
-    console.log('AI response:', aiResponse);
-
-    // Parse AI response
-    let tasksFromAI;
-    try {
-      tasksFromAI = JSON.parse(aiResponse);
-      if (!Array.isArray(tasksFromAI)) {
-        throw new Error('AI response is not an array');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      return res.status(500).json({
-        success: false,
-        error: 'Failed to parse AI response',
-        details: parseError.message
-      });
-    }
-
-    // Create tasks in database based on AI response
-    const createdTasks = await Promise.all(
-      tasksFromAI.map(async (taskData) => {
-        const taskCreateData = {
-          title: taskData.title,
-          status: taskData.status || 'PENDING',
-          duration: taskData.duration || 5, // Default to 5 minutes if no subtasks
-          subtasks: {
-            create: taskData.subtasks?.map(subtask => ({
-              title: subtask.title,
-              status: subtask.status || 'PENDING',
-              duration: subtask.duration
-            })) || []
-          }
-        };
-
-        // Add user connection if userId is provided
-        if (userId) {
-          taskCreateData.user = { connect: { id: userId } };
+    const tasksFromAI = await generateTasksFromText(text.trim());
+    const createOperations = tasksFromAI.map((taskData) => {
+      const taskCreateData = {
+        title: taskData.title,
+        status: taskData.status,
+        duration: taskData.duration,
+        subtasks: {
+          create: taskData.subtasks.map((subtask) => ({
+            title: subtask.title,
+            description: subtask.description,
+            status: subtask.status,
+            duration: subtask.duration
+          }))
         }
+      };
 
-        return prisma.mainTask.create({
-          data: taskCreateData,
-          include: { subtasks: true }
-        });
-      })
-    );
+      if (userId) {
+        taskCreateData.user = { connect: { id: userId } };
+      }
 
-    res.status(201).json({
-      success: true,
-      data: createdTasks
+      return prisma.mainTask.create({
+        data: taskCreateData,
+        include: { subtasks: true }
+      });
     });
 
+    const createdTasks = await prisma.$transaction(createOperations);
+    return res.status(201).json({ success: true, data: createdTasks });
   } catch (error) {
-    console.error('Error generating tasks:', error);
-    res.status(500).json({
+    console.error('Failed to generate tasks:', error);
+    const status = error.name === 'TaskValidationError' ? 502 : 500;
+    return res.status(status).json({
       success: false,
-      error: 'Failed to generate tasks',
-      details: error.message
+      error:
+        status === 502
+          ? 'AI returned invalid task data after one repair attempt'
+          : 'Failed to generate tasks'
     });
   }
 });
 
-// GET all tasks
 router.get('/tasks', async (req, res) => {
   try {
     const tasks = await prisma.mainTask.findMany({
-      include: {
-        subtasks: true
-      }
+      include: { subtasks: true },
+      orderBy: { createdAt: 'desc' }
     });
-
-    res.json({
-      success: true,
-      data: tasks
-    });
+    return res.json({ success: true, data: tasks });
   } catch (error) {
-    console.error('Error fetching tasks:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch tasks',
-      details: error.message
-    });
+    return sendError(res, error, 'Failed to fetch tasks');
   }
 });
 
-// GET single task by ID
 router.get('/tasks/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-
     const task = await prisma.mainTask.findUnique({
-      where: { id },
-      include: {
-        subtasks: true
-      }
+      where: { id: req.params.id },
+      include: { subtasks: true }
     });
 
     if (!task) {
-      return res.status(404).json({
-        success: false,
-        error: 'Task not found'
-      });
+      return res.status(404).json({ success: false, error: 'Task not found' });
     }
-
-    res.json({
-      success: true,
-      data: task
-    });
+    return res.json({ success: true, data: task });
   } catch (error) {
-    console.error('Error fetching task:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch task',
-      details: error.message
-    });
+    return sendError(res, error, 'Failed to fetch task');
   }
 });
 
-// PATCH: update task status
 router.patch('/tasks/:id/status', async (req, res) => {
   try {
-    const { id } = req.params;
     const { status } = req.body;
-
-    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
+    if (!TASK_STATUSES.includes(status)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid status value'
@@ -159,180 +116,127 @@ router.patch('/tasks/:id/status', async (req, res) => {
     }
 
     const updatedTask = await prisma.mainTask.update({
-      where: { id },
+      where: { id: req.params.id },
       data: { status }
     });
-
-    res.json({
+    return res.json({
       success: true,
       message: 'Task status updated',
       data: updatedTask
     });
   } catch (error) {
-    console.error('Error updating task status:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update task status',
-      details: error.message
-    });
+    return sendError(res, error, 'Failed to update task status');
   }
 });
 
-// DELETE task and subtasks
 router.delete('/tasks/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const [, deleted] = await prisma.$transaction([
+      prisma.subtask.deleteMany({ where: { taskId: id } }),
+      prisma.mainTask.delete({ where: { id } })
+    ]);
 
-    await prisma.subtask.deleteMany({
-      where: { taskId: id }
-    });
-
-    const deleted = await prisma.mainTask.delete({
-      where: { id }
-    });
-
-    res.json({
+    return res.json({
       success: true,
       message: 'Task deleted successfully',
       data: deleted
     });
   } catch (error) {
-    console.error('Error deleting task:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to delete task',
-      details: error.message
-    });
+    return sendError(res, error, 'Failed to delete task');
   }
 });
 
-// Debugging route
+router.patch('/subtasks/:id/status', async (req, res) => {
+  try {
+    const result = await setSubtaskStatus(
+      prisma,
+      req.params.id,
+      req.body.status
+    );
+    return res.json({
+      success: true,
+      message: 'Subtask status updated',
+      data: result.updatedSubtask,
+      mainTaskUpdated: true,
+      updatedMainTask: result.updatedMainTask
+    });
+  } catch (error) {
+    return sendError(res, error, 'Failed to update subtask status');
+  }
+});
+
+router.patch('/subtasks/:id', async (req, res) => {
+  const changes = {};
+
+  if (Object.prototype.hasOwnProperty.call(req.body, 'title')) {
+    if (typeof req.body.title !== 'string' || !req.body.title.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Subtask title is required'
+      });
+    }
+    changes.title = req.body.title.trim().slice(0, 120);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body, 'description')) {
+    if (req.body.description != null && typeof req.body.description !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Subtask description must be text'
+      });
+    }
+    changes.description = req.body.description?.trim().slice(0, 500) || null;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body, 'duration')) {
+    const duration = Number(req.body.duration);
+    if (!Number.isInteger(duration) || duration < 1 || duration > 120) {
+      return res.status(400).json({
+        success: false,
+        error: 'Duration must be an integer between 1 and 120'
+      });
+    }
+    changes.duration = duration;
+  }
+
+  if (!Object.keys(changes).length) {
+    return res.status(400).json({
+      success: false,
+      error: 'No editable subtask fields were provided'
+    });
+  }
+
+  try {
+    const result = await updateSubtask(prisma, req.params.id, changes);
+    return res.json({
+      success: true,
+      message: 'Subtask updated',
+      data: result.updatedSubtask,
+      updatedMainTask: result.updatedMainTask
+    });
+  } catch (error) {
+    return sendError(res, error, 'Failed to update subtask');
+  }
+});
+
 router.get('/debug-tasks', async (req, res) => {
   try {
     const tasks = await prisma.mainTask.findMany({
-      include: {
-        subtasks: true
-      }
+      include: { subtasks: true }
     });
-
-    res.json({
-      count: tasks.length,
-      tasks
-    });
+    return res.json({ count: tasks.length, tasks });
   } catch (error) {
-    console.error('Error fetching debug tasks:', error);
-    res.status(500).json({ error: error.message });
+    return sendError(res, error, 'Failed to fetch debug tasks');
   }
 });
 
-// Health check
 router.get('/ping', (req, res) => {
   res.json({ success: true, message: 'pong' });
 });
 
-// Cleanup
 process.on('beforeExit', async () => {
   await prisma.$disconnect();
-});
-
-// PATCH endpoint to update subtask status
-router.patch('/subtasks/:id/status', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const validStatuses = ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid status value'
-      });
-    }
-
-    // Get the current subtask to check its previous status
-    const currentSubtask = await prisma.subtask.findUnique({
-      where: { id },
-      include: {
-        task: true
-      }
-    });
-
-    if (!currentSubtask) {
-      return res.status(404).json({
-        success: false,
-        error: 'Subtask Not Found'
-      });
-    }
-
-    // Update the subtask's status
-    const updatedSubtask = await prisma.subtask.update({
-      where: { id },
-      data: { status },
-      include: {
-        task: {
-          include: {
-            subtasks: true
-          }
-        }
-      }
-    });
-
-    const { task } = updatedSubtask;
-    
-    // Check if we need to update the main task status
-    let mainTaskUpdated = false;
-
-    // If subtask changed from PENDING to IN_PROGRESS and main task is not IN_PROGRESS
-    if (currentSubtask.status === 'PENDING' && 
-        status === 'IN_PROGRESS' && 
-        task.status !== 'IN_PROGRESS') {
-      
-      await prisma.mainTask.update({
-        where: { id: task.id },
-        data: { status: 'IN_PROGRESS' }
-      });
-      mainTaskUpdated = true;
-    }
-    // Check if all subtasks are now COMPLETED
-    else if (status === 'COMPLETED') {
-      const allCompleted = task.subtasks.every(s => 
-        s.id === id ? status === 'COMPLETED' : s.status === 'COMPLETED'
-      );
-
-      if (allCompleted && task.status !== 'COMPLETED') {
-        await prisma.mainTask.update({
-          where: { id: task.id },
-          data: { status: 'COMPLETED' }
-        });
-        mainTaskUpdated = true;
-      }
-    }
-
-    // Fetch the updated main task if it was modified
-    let updatedMainTask = null;
-    if (mainTaskUpdated) {
-      updatedMainTask = await prisma.mainTask.findUnique({
-        where: { id: task.id },
-        include: { subtasks: true }
-      });
-    }
-
-    res.json({
-      success: true,
-      message: 'Subtask status updated',
-      data: updatedSubtask,
-      mainTaskUpdated: mainTaskUpdated,
-      updatedMainTask: updatedMainTask
-    });
-
-  } catch (error) {
-    console.error('Error updating subtask status:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update subtask status',
-      details: error.message
-    });
-  }
 });
 
 module.exports = router;

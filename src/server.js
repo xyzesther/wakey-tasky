@@ -1,64 +1,55 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
-const taskApi = require("../services/routes/taskRoutes"); 
-require("dotenv").config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client');
+const path = require('path');
+const taskApi = require('../services/routes/taskRoutes');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 const prisma = new PrismaClient();
+let httpServer = null;
 
-// Test database connection before starting the server
-async function testDatabaseConnection() {
-	try {
-		// Simple query to test the connection
-		await prisma.$queryRaw`SELECT 1`;
-		console.log("Database connection successful");
-		return true;
-	} catch (error) {
-		console.error("Database connection failed:", error);
-		return false;
-	}
-}
-
-// Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(bodyParser.json({ limit: '100kb' }));
+app.use(express.static(path.join(__dirname, '../public')));
+app.use('/api', taskApi);
 
-// API Routes
-app.use("/api", taskApi);
-
-// Start server with database check
 async function startServer() {
-	const dbConnected = await testDatabaseConnection();
+  if (httpServer) {
+    return httpServer;
+  }
 
-	if (!dbConnected) {
-		console.error("Server not started due to database connection failure");
-		process.exit(1);
-	}
+  await prisma.$queryRaw`SELECT 1`;
+  const port = Number(process.env.PORT) || 3000;
 
-	const server = app.listen(PORT, () => {
-		console.log(`Server running on port ${PORT}`);
-	});
+  httpServer = await new Promise((resolve, reject) => {
+    const server = app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+      resolve(server);
+    });
+    server.once('error', reject);
+  });
 
-	// Clean up connections on server close
-	server.on("close", async () => {
-		await prisma.$disconnect();
-		console.log("Database connection closed");
-	});
-
-	return server;
+  return httpServer;
 }
 
-// Handle the promise
-startServer()
-	.then((server) => {
-		// Export the server for potential use in main.js
-		module.exports = server;
-	})
-	.catch((error) => {
-		console.error("Failed to start server:", error);
-		process.exit(1);
-	});
+async function stopServer() {
+  if (httpServer) {
+    const server = httpServer;
+    httpServer = null;
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+  await prisma.$disconnect();
+}
+
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error('Failed to start server:', error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { app, startServer, stopServer };

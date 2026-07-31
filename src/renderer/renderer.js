@@ -5,8 +5,6 @@ const taskListContainer = document.getElementById('taskListContainer');
 const chatboxContainer = document.getElementById('chatboxContainer');
 const taskInput = document.getElementById('taskInput');
 const sendButton = document.getElementById('sendButton');
-const startTimeInput = document.getElementById('startTime');
-const endTimeInput = document.getElementById('endTime');
 const errorDialog = document.getElementById('errorDialog');
 const errorOkButton = document.getElementById('errorOkButton');
 const chatCloseButton = document.getElementById('chatCloseButton');
@@ -15,9 +13,6 @@ const folderIcon = document.getElementById('folderIcon');
 const sendIcon = document.getElementById('sendIcon');
 
 // Variables to track state
-let isDragging = false;
-let offsetX, offsetY;
-let isMinimized = true; // Start in minimized state by default
 let currentState = 'minimized'; // 'minimized', 'chat', 'input', 'tasks'
 
 // Add window dragging functionality to the window controls and app icon
@@ -31,6 +26,7 @@ const dragElements = [
 let isWindowDragging = false;
 let lastMouseX = 0;
 let lastMouseY = 0;
+let didWindowDrag = false;
 
 // Hide containers and show minimized icon by default
 inputContainer.style.display = 'none';
@@ -43,29 +39,9 @@ minimizedIcon.style.position = 'absolute';
 minimizedIcon.style.right = '20px';
 minimizedIcon.style.bottom = '20px';
 
-// Make the minimized icon draggable
-minimizedIcon.addEventListener('mousedown', (e) => {
-    // Prevent default behavior to avoid text selection during drag
-    e.preventDefault();
-    
-    isDragging = true;
-    
-    // Calculate the offset between mouse position and element position
-    const rect = minimizedIcon.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    
-    // Make sure position styles are set
-    if (!minimizedIcon.style.position || minimizedIcon.style.position === 'static') {
-        minimizedIcon.style.position = 'absolute';
-    }
-    
-    minimizedIcon.style.transition = 'none'; // Disable transition during drag
-});
-
 // Toggle between minimized and other states when clicking the icon
-minimizedIcon.addEventListener('click', (e) => {
-    if (!isDragging) {
+minimizedIcon.addEventListener('click', () => {
+    if (!didWindowDrag) {
         // Open the chatbox in a new window instead of showing it inline
         window.api.openChatbox();
     }
@@ -95,45 +71,6 @@ sendIcon.addEventListener('click', () => {
     showInputInterface();
 });
 
-// Mouse movement handler for dragging the icon
-document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    
-    // Update position based on mouse movement
-    const newX = e.clientX - offsetX;
-    const newY = e.clientY - offsetY;
-    
-    // Keep icon within viewport boundaries
-    const maxX = window.innerWidth - minimizedIcon.offsetWidth;
-    const maxY = window.innerHeight - minimizedIcon.offsetHeight;
-    
-    const boundedX = Math.max(0, Math.min(newX, maxX));
-    const boundedY = Math.max(0, Math.min(newY, maxY));
-    
-    // Set the position directly with top/left (more reliable than transforms)
-    minimizedIcon.style.position = 'absolute';
-    minimizedIcon.style.left = `${boundedX}px`;
-    minimizedIcon.style.top = `${boundedY}px`;
-    
-    // Clear any right/bottom styles that might interfere
-    minimizedIcon.style.right = 'auto';
-    minimizedIcon.style.bottom = 'auto';
-});
-
-document.addEventListener('mouseup', () => {
-    if (isDragging) {
-        isDragging = false;
-        minimizedIcon.style.transition = 'transform 0.2s'; // Re-enable transition
-        
-        // Save the current position if needed for persistence
-        const position = {
-            left: minimizedIcon.style.left,
-            top: minimizedIcon.style.top
-        };
-        console.log('Icon position saved:', position);
-    }
-});
-
 // Add window dragging to elements
 dragElements.forEach(element => {
     if (element) {
@@ -146,9 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Debug check for API
     console.log('Window API available:', window.api);
     console.log('API methods:', window.api ? Object.keys(window.api) : 'API not available');
-    
-    // Initialize time inputs
-    initializeTimeInputs();
     
     // Initially, show icon and hide other containers
     minimizedIcon.style.display = 'flex';  // or 'block' depending on your CSS
@@ -165,8 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton.addEventListener('click', submitTask);
     
     // Also allow pressing Enter to submit
-    taskInput.addEventListener('keypress', (e) => {
+    taskInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
+            e.preventDefault();
             submitTask();
         }
     });
@@ -205,15 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Start window drag operation
 function startWindowDrag(e) {
-    // Skip if this is the minimized icon in minimized mode
-    if (e.currentTarget === minimizedIcon && currentState === 'minimized') {
-        return; // Let the minimizedIcon dragging handle this
-    }
-    
     e.preventDefault();
     isWindowDragging = true;
-    lastMouseX = e.clientX;
-    lastMouseY = e.clientY;
+    didWindowDrag = false;
+    lastMouseX = e.screenX;
+    lastMouseY = e.screenY;
     
     window.api.startWindowDrag();
     
@@ -226,13 +157,14 @@ function startWindowDrag(e) {
 function windowDragMove(e) {
     if (!isWindowDragging) return;
     
-    const deltaX = e.clientX - lastMouseX;
-    const deltaY = e.clientY - lastMouseY;
+    const deltaX = e.screenX - lastMouseX;
+    const deltaY = e.screenY - lastMouseY;
     
     if (deltaX !== 0 || deltaY !== 0) {
+        didWindowDrag = true;
         window.api.dragWindow(deltaX, deltaY);
-        lastMouseX = e.clientX;
-        lastMouseY = e.clientY;
+        lastMouseX = e.screenX;
+        lastMouseY = e.screenY;
     }
 }
 
@@ -275,8 +207,6 @@ function showInputInterface() {
     // Resize window
     window.api.resizeWindow(450, 300);
     
-    // Initialize time inputs
-    initializeTimeInputs();
 }
 
 // Show the tasks list interface
@@ -336,21 +266,6 @@ function toggleMinimized() {
     }
 }
 
-// Initialize default time values (current time + 1 hour for end time)
-function initializeTimeInputs() {
-    const now = new Date();
-    const startHours = now.getHours().toString().padStart(2, '0');
-    const startMinutes = now.getMinutes().toString().padStart(2, '0');
-    
-    // Set end time to 1 hour later
-    const endTime = new Date(now.getTime() + 60 * 60 * 1000);
-    const endHours = endTime.getHours().toString().padStart(2, '0');
-    const endMinutes = endTime.getMinutes().toString().padStart(2, '0');
-    
-    startTimeInput.value = `${startHours}:${startMinutes}`;
-    endTimeInput.value = `${endHours}:${endMinutes}`;
-}
-
 // Add task to UI
 function addTaskToUI(task) {
     // Format task data to ensure consistent structure
@@ -361,27 +276,13 @@ function addTaskToUI(task) {
     taskCard.className = 'task-card';
     taskCard.dataset.taskId = formattedTask.id;
     
-    // Format time
-    let startTimeStr = 'Not set';
-    let endTimeStr = 'Not set';
-    
-    try {
-        const startTime = new Date(formattedTask.scheduledTime);
-        startTimeStr = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        if (formattedTask.endTime) {
-            const endTime = new Date(formattedTask.endTime);
-            endTimeStr = endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-    } catch (e) {
-        console.error('Error formatting task time:', e);
-    }
+    const createdTime = new Date(formattedTask.createdAt).toLocaleString();
     
     taskCard.innerHTML = `
         <div class="task-header">
-            <div class="task-title">${formattedTask.title}</div>
+            <div class="task-title">${escapeHtml(formattedTask.title)}</div>
             <div class="task-actions">
-                <div class="task-time">${startTimeStr} - ${endTimeStr}</div>
+                <div class="task-time">${formattedTask.duration} min · ${escapeHtml(createdTime)}</div>
                 <button class="delete-button" data-id="${formattedTask.id}">
                     <i class="fas fa-trash"></i>
                 </button>
@@ -391,7 +292,7 @@ function addTaskToUI(task) {
         <div class="subtasks">
             ${formattedTask.subtasks.map(subtask => `
                 <div class="subtask">
-                    <div class="subtask-title">${subtask.title || 'Subtask'}</div>
+                    <div class="subtask-title">${escapeHtml(subtask.title || 'Subtask')}</div>
                     <div class="subtask-duration">${subtask.duration || 0} min</div>
                 </div>
             `).join('')}
@@ -454,34 +355,24 @@ async function submitTask() {
             return;
         }
         
-        // Get time values
-        const startTime = startTimeInput.value;
-        const endTime = endTimeInput.value;
-        
-        if (!startTime || !endTime) {
-            showError('Please set start and end times');
-            return;
-        }
-        
-        console.log('Submitting task:', { text, startTime, endTime });
+        console.log('Submitting task:', { text });
         
         // Show loading state
         sendButton.disabled = true;
         sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         
         // Create task
-        const response = await window.api.generateTask(text, startTime, endTime);
+        const response = await window.api.generateTask(text);
         console.log('Full API response:', response);
         
         if (response.success) {
-            console.log('Task created successfully:', response.data.task);
-            console.log('Subtasks:', response.data.task.subtasks);
+            const createdTasks = Array.isArray(response.data) ? response.data : [];
+            console.log('Tasks created successfully:', createdTasks);
             
             // Clear input field
             taskInput.value = '';
             
-            // Add task to UI
-            addTaskToUI(response.data.task);
+            createdTasks.forEach(addTaskToUI);
             
             // Ensure task list is visible
             taskListContainer.style.display = 'flex';
@@ -508,10 +399,24 @@ function formatTaskData(task) {
         id: task.id || '',
         title: task.title || 'Unnamed Task',
         status: task.status || 'PENDING',
-        scheduledTime: task.scheduledTime || new Date(),
-        endTime: task.endTime || null,
+        createdAt: task.createdAt || new Date().toISOString(),
+        duration: Number.isFinite(task.duration)
+            ? task.duration
+            : (task.subtasks || []).reduce(
+                (total, subtask) => total + (subtask.duration || 0),
+                0
+            ),
         subtasks: Array.isArray(task.subtasks) ? task.subtasks : []
     };
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
 }
 
 // Function to delete a task

@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // 加载任务数据
     await loadTasks();
+
+    window.api.onTasksChanged?.(() => {
+        loadTasks();
+    });
     
     // 定期刷新任务数据（每60秒）
     setInterval(loadTasks, 60000);
@@ -149,7 +153,7 @@ function createTaskCard(task) {
     header.innerHTML = `
         <img class="chevron" src="./assets/chevron.svg" alt="Expand" />
         <div class="task-title">
-            <span>${task.title}</span>
+                <span>${escapeHtml(task.title)}</span>
         </div>
         <div class="task-time">
             <div>
@@ -197,7 +201,7 @@ function createTaskCard(task) {
             taskItem.innerHTML = `
                 <div class="subtask-content">
                     <img src="${iconSrc}" class="task-icon" alt="${subtask.status === 'COMPLETED' ? 'Done' : 'To do'}" />
-                    <span class="task-desc">${subtask.title}</span>
+                    <span class="task-desc">${escapeHtml(subtask.title)}</span>
                     <div class="tomato-icons">
                         ${tomatoIcons}
                     </div>
@@ -296,6 +300,15 @@ function createTaskCard(task) {
 }
 
 // ===== 工具函数 =====
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
 // 1. 格式化持续时间显示
 function formatDuration(minutes) {
     if (minutes >= 60) {
@@ -423,12 +436,32 @@ function editSubtask(taskId, subtaskId, subtask) {
 }
 
 // 开始子任务
-function startSubtask(taskId, subtaskId, subtask) {
+async function startSubtask(taskId, subtaskId, subtask) {
     console.log('Starting subtask:', subtaskId, subtask);
-    if (window.api && window.api.openPomodoro) {
-        window.api.openPomodoro(subtaskId, subtask.title, subtask.duration || 30);
-    } else {
+    if (!window.api?.openPomodoro || !window.api?.updateSubtaskStatus) {
         alert('Pomodoro integration not available.');
+        return;
+    }
+
+    try {
+        const response = await window.api.updateSubtaskStatus(
+            taskId,
+            subtaskId,
+            'IN_PROGRESS'
+        );
+        if (!response.success) {
+            throw new Error(response.error || 'Unable to start subtask');
+        }
+
+        await window.api.openPomodoro(
+            subtaskId,
+            subtask.title,
+            subtask.duration || 30
+        );
+        await loadTasks();
+    } catch (error) {
+        console.error('Error starting subtask:', error);
+        alert(`无法开始任务：${error.message}`);
     }
 }
 
@@ -447,7 +480,7 @@ function createEditModal(subtask, onSave) {
             <div class="edit-modal-body">
                 <div class="form-group">
                     <label for="subtask-title">Task Content</label>
-                    <textarea id="subtask-title" rows="2">${subtask.title}</textarea>
+                    <textarea id="subtask-title" rows="2">${escapeHtml(subtask.title)}</textarea>
                 </div>
                 <div class="form-group">
                     <label>Estimated Duration</label>
@@ -459,7 +492,7 @@ function createEditModal(subtask, onSave) {
                 </div>
                 <div class="form-group">
                     <label for="subtask-description">Description (optional)</label>
-                    <textarea id="subtask-description" rows="3">${subtask.description || ''}</textarea>
+                    <textarea id="subtask-description" rows="3">${escapeHtml(subtask.description || '')}</textarea>
                 </div>
             </div>
             <div class="edit-modal-footer">
@@ -532,7 +565,7 @@ function createEditModal(subtask, onSave) {
 
 // ===== 数据更新 =====
 // 更新子任务数据
-async function updateSubtaskData(taskId, subtaskId, updatedData) {
+async function updateSubtaskData(_taskId, subtaskId, updatedData) {
     try {
         if (window.api.updateSubtask) {
             const response = await window.api.updateSubtask(subtaskId, updatedData);

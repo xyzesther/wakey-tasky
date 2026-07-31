@@ -26,15 +26,20 @@ model MainTask {
   duration    Int?
   subtasks    Subtask[]
   status      TaskStatus  @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Subtask {
-  id          String      @id @default(uuid())
+  id          String     @id @default(uuid())
   taskId      String
-  task        MainTask    @relation(fields: [taskId], references: [id])
+  task        MainTask   @relation(fields: [taskId], references: [id])
   title       String
+  description String?
   duration    Int?
-  status      TaskStatus  @default(PENDING)
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 enum TaskStatus {

@@ -1082,6 +1082,7 @@ body {
 
 /* 固定在顶部的头部 */
 .tasklist-header {
+    -webkit-app-region: drag;
     flex-shrink: 0;
     padding: 20px;
     border-bottom: 1px solid #e0e0e0;

@@ -1,12 +1,13 @@
 const {app, BrowserWindow, ipcMain} = require('electron');
 const path = require('path');
 const { PrismaClient } = require('@prisma/client');
+const { setSubtaskStatus } = require('../../services/tasks/taskService');
 
 // Initialize Prisma
 const prisma = new PrismaClient();
 
 // Import our Express server
-const server = require('../server');
+const { startServer, stopServer } = require('../server');
 
 // ----------------------------------------------------------------------------
 // Application window creation and management
@@ -66,6 +67,12 @@ function createMainWindow() {
 
 // Function to create the chatbox window
 function createChatboxWindow() {
+    if (chatboxWindow && !chatboxWindow.isDestroyed()) {
+        chatboxWindow.show();
+        chatboxWindow.focus();
+        return chatboxWindow;
+    }
+
     chatboxWindow = new BrowserWindow({
         width: 400,
         height: 500,
@@ -100,6 +107,12 @@ function createChatboxWindow() {
 
 // 创建任务列表窗口的函数
 function createTaskListWindow() {
+    if (taskListWindow && !taskListWindow.isDestroyed()) {
+        taskListWindow.show();
+        taskListWindow.focus();
+        return taskListWindow;
+    }
+
     taskListWindow = new BrowserWindow({
         width: 400,
         height: 600,
@@ -137,26 +150,27 @@ function positionTaskListWindow() {
 
 // Handle IPC resize-window event
 ipcMain.handle('resize-window', (event, { width, height }) => {
-    if (mainWindow) {
-        mainWindow.setSize(width, height);
+    const targetWindow = BrowserWindow.fromWebContents(event.sender);
+    if (targetWindow && !targetWindow.isDestroyed()) {
+        targetWindow.setSize(width, height);
         
         // If expanding the window, center it on screen
-        if (width > 80) {
-            mainWindow.center();
+        if (width > 80 && targetWindow === mainWindow) {
+            targetWindow.center();
             // Ensure the window has a title bar and is not transparent for expanded views
             if (width === 350 && (height === 150 || height === 200)) {
                 // Chatbox interface - maintain transparency and no frame for the chat UI
-                mainWindow.setResizable(false);
-                mainWindow.setOpacity(1.0);
+                targetWindow.setResizable(false);
+                targetWindow.setOpacity(1.0);
             } else {
                 // Task creation or task list view - need a frame
-                mainWindow.setResizable(true);
+                targetWindow.setResizable(true);
             }
-        } else {
+        } else if (width <= 80 && targetWindow === mainWindow) {
             // If minimizing, position it in the bottom right corner
             const { width: screenWidth, height: screenHeight } = 
                 require('electron').screen.getPrimaryDisplay().workAreaSize;
-            mainWindow.setPosition(screenWidth - 100, screenHeight - 100);
+            targetWindow.setPosition(screenWidth - 100, screenHeight - 100);
         }
         
         return true;
@@ -181,6 +195,15 @@ ipcMain.handle('open-chatbox', (event) => {
     }
     
     createChatboxWindow();
+    return true;
+});
+
+ipcMain.handle('open-task-creation', () => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+        createMainWindow();
+    }
+    mainWindow.show();
+    mainWindow.webContents.send('show-task-creation');
     return true;
 });
 
@@ -245,34 +268,33 @@ ipcMain.handle('open-pomodoro', (event, subtaskId, title, duration) => {
         }
     });
     
-    // Load the HTML file first
     const htmlPath = path.join(__dirname, '../../public/pomodoro.html');
     console.log('Loading Pomodoro HTML from:', htmlPath);
-    
-    pomodoroWindow.loadFile(htmlPath);
-    
-    // Once the page is loaded, send the data
-    pomodoroWindow.webContents.once('dom-ready', () => {
-        pomodoroWindow.webContents.send('pomodoro-data', {
-            subtaskId,
-            title,
-            duration
-        });
+
+    pomodoroWindow.loadFile(htmlPath, {
+        query: {
+            subtaskId: String(subtaskId),
+            title: String(title || 'Subtask'),
+            duration: String(duration || 25)
+        }
+    });
+
+    pomodoroWindow.once('ready-to-show', () => {
         pomodoroWindow.show();
         pomodoroWindow.focus();
     });
-    
-    return pomodoroWindow;
+
+    return true;
 });
 
 // Add IPC handler to complete subtask
 ipcMain.handle('complete-subtask', async (event, subtaskId) => {
     try {
-        await prisma.subtask.update({
-            where: { id: subtaskId },
-            data: { status: 'COMPLETED' }
-        });
-        return { success: true };
+        const result = await setSubtaskStatus(prisma, subtaskId, 'COMPLETED');
+        if (taskListWindow && !taskListWindow.isDestroyed()) {
+            taskListWindow.webContents.send('tasks-changed');
+        }
+        return { success: true, data: result };
     } catch (error) {
         return { success: false, error: error.message };
     }
@@ -282,8 +304,15 @@ ipcMain.handle('complete-subtask', async (event, subtaskId) => {
 // App lifecycle events
 // ----------------------------------------------------------------------------
 
-app.whenReady().then(() => {
-    createMainWindow();
+app.whenReady().then(async () => {
+    try {
+        await startServer();
+        createMainWindow();
+    } catch (error) {
+        console.error('Failed to initialize WakeyTasky:', error);
+        app.quit();
+        return;
+    }
     
     // Handle app activation (macOS)
     app.on('activate', () => {
@@ -309,5 +338,5 @@ app.on('activate', () => {
 // Clean up resources before exiting
 app.on('before-quit', async () => {
     await prisma.$disconnect();
-    server.close();
+    await stopServer();
 });
