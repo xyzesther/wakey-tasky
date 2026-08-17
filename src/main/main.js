@@ -37,6 +37,8 @@ function createMainWindow() {
         height: 80, // Smaller height for the awaiting icon
         frame: false,
         transparent: true,
+        backgroundColor: '#00000000',
+        hasShadow: false,
         resizable: false,
         skipTaskbar: false, // Show in taskbar so it's easier to find
         alwaysOnTop: false, // Don't keep on top as it can interfere with other windows
@@ -51,6 +53,9 @@ function createMainWindow() {
 
     // Hide the menu bar
     mainWindow.setMenuBarVisibility(false);
+    // macOS adds a native drop shadow to transparent windows by default.
+    // For the circular standby icon this appears as a second offset circle.
+    mainWindow.setHasShadow(false);
     
     // Position window in the bottom right corner
     const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;

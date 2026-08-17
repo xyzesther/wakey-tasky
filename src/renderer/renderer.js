@@ -34,11 +34,6 @@ taskListContainer.style.display = 'none';
 chatboxContainer.style.display = 'none';
 minimizedIcon.style.display = 'flex';
 
-// Set initial position styles for the minimized icon
-minimizedIcon.style.position = 'absolute';
-minimizedIcon.style.right = '20px';
-minimizedIcon.style.bottom = '20px';
-
 // Toggle between minimized and other states when clicking the icon
 minimizedIcon.addEventListener('click', () => {
     if (!didWindowDrag) {
@@ -244,17 +239,6 @@ function minimizeApp() {
     
     // Resize window to just fit the icon
     window.api.resizeWindow(80, 80);
-    
-    // Give the window resize a moment to complete before repositioning
-    setTimeout(() => {
-        // Make sure position is set correctly
-        if (!minimizedIcon.style.left || !minimizedIcon.style.top) {
-            // Default position in bottom right if not set
-            const { innerWidth, innerHeight } = window;
-            minimizedIcon.style.left = `${innerWidth - 100}px`;
-            minimizedIcon.style.top = `${innerHeight - 100}px`;
-        }
-    }, 100);
 }
 
 // Legacy toggle function - replaced with more specific state functions
