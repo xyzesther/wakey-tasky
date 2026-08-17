@@ -47,6 +47,22 @@ function scrollMessagesToBottom() {
     messages.scrollTop = messages.scrollHeight;
 }
 
+function getFriendlyTaskError(response, error) {
+    if (response?.code === 'AI_NOT_CONFIGURED') {
+        return "AI task breakdown isn't set up yet. Add OPENAI_API_KEY to the project's .env file, then restart WakeyTasky.";
+    }
+
+    if (response?.code === 'AI_RESPONSE_INVALID') {
+        return "I couldn't turn that into a clear task plan. Try rephrasing it with a little more detail.";
+    }
+
+    if (error instanceof TypeError || /fetch|network|connect/i.test(error?.message || '')) {
+        return "I can't connect to the task service right now. Make sure WakeyTasky is running, then try again.";
+    }
+
+    return response?.error || "I couldn't create the task this time. Please try again in a moment.";
+}
+
 async function sendMessage() {
     const input = document.getElementById('chatInput');
     const sendButton = document.getElementById('chatSendBtn');
@@ -68,7 +84,9 @@ async function sendMessage() {
         thinkingMessage.remove();
 
         if (!response?.success) {
-            throw new Error(response?.error || '任务创建失败');
+            const requestError = new Error(response?.error || 'Task creation failed');
+            requestError.response = response;
+            throw requestError;
         }
 
         appendAIMessage('任务已创建成功！请查看任务列表。');
@@ -76,7 +94,7 @@ async function sendMessage() {
     } catch (error) {
         thinkingMessage.remove();
         console.error('Error processing message:', error);
-        appendAIMessage(`任务创建失败：${error.message}`, 'error');
+        appendAIMessage(getFriendlyTaskError(error.response, error), 'error');
     } finally {
         isSending = false;
         sendButton.disabled = false;

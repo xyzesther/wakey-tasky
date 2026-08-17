@@ -65,14 +65,24 @@ router.post('/generate-task', async (req, res) => {
     const createdTasks = await prisma.$transaction(createOperations);
     return res.status(201).json({ success: true, data: createdTasks });
   } catch (error) {
+    if (error.code === 'MISSING_OPENAI_API_KEY') {
+      console.warn('AI task generation is unavailable because OPENAI_API_KEY is not configured.');
+      return res.status(503).json({
+        success: false,
+        code: 'AI_NOT_CONFIGURED',
+        error: "AI task breakdown isn't set up yet. Add OPENAI_API_KEY to the project's .env file, then restart WakeyTasky."
+      });
+    }
+
     console.error('Failed to generate tasks:', error);
     const status = error.name === 'TaskValidationError' ? 502 : 500;
     return res.status(status).json({
       success: false,
+      code: status === 502 ? 'AI_RESPONSE_INVALID' : 'TASK_GENERATION_FAILED',
       error:
         status === 502
-          ? 'AI returned invalid task data after one repair attempt'
-          : 'Failed to generate tasks'
+          ? "I couldn't turn that into a clear task plan. Try rephrasing it with a little more detail."
+          : "I couldn't create the task this time. Please try again in a moment."
     });
   }
 });

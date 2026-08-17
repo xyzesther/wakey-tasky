@@ -41,14 +41,17 @@ const api = {
             });
             
             console.log('Response status:', response.status);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('API error:', response.status, errorText);
-                return { success: false, error: `Server error (${response.status})` };
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok || !data?.success) {
+                console.error('API error:', response.status, data);
+                return {
+                    success: false,
+                    code: data?.code || 'TASK_SERVICE_ERROR',
+                    error: data?.error || 'The task service is temporarily unavailable. Please try again in a moment.'
+                };
             }
-            
-            const data = await response.json();
+
             console.log('Response data:', data);
             return data;
         } catch (error) {
@@ -183,6 +186,7 @@ const api = {
             if (!response.ok || !data.success) {
                 return {
                     success: false,
+                    code: data.code || 'TASK_SERVICE_ERROR',
                     error: data.error || `Server error (${response.status})`
                 };
             }
